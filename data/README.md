@@ -1,8 +1,27 @@
 # Data
 
-The analysis uses `credit-choice.csv`, the merged choice + survey dataset from the experiment described in the main README.
+## Original dataset
 
-The original dataset is **not redistributed** in this repository — it was provided under the terms of an academic course at Universidad de Chile (IN5162 — Marketing Engineering).
+The original analysis used `credit-choice.csv` (~8000 rows in long format,
+two rows per binary choice). **It is not redistributed in this repository**
+because it was provided under the terms of an academic course at Universidad
+de Chile (IN5162 — Marketing Engineering).
+
+## Synthetic sample (`sample.csv`)
+
+This repository ships a **fully synthetic** sample at `data/sample.csv`
+(~265 rows = ~132 binary choices, 22 simulated participants × 6 choices × 2
+alternatives). It is generated to:
+
+- Respect the original schema column-by-column
+- Match the marginal distributions of `condicion_experimental` and
+  `macroescenario`
+- Reproduce the basic mechanic that participants tend to pick the alternative
+  with lower total cost (CTC)
+
+It is designed so that the analysis Rmd runs end-to-end against `sample.csv`
+and produces qualitatively similar (but smaller-N) results. **It contains no
+real participant records.**
 
 ## Schema
 
@@ -20,15 +39,12 @@ Long format: each binary choice contributes two rows (one per alternative).
 | `choice` | int (0/1) | 1 if this alternative was chosen |
 | `option` | int (1/2) | Position (right / left) |
 | `condicion_experimental` | string | GC / T1 / T2 / T3 |
-| `type_cons` | string | consistency_slider / consistency_table / dominated_choice |
+| `type_cons` | string | consistency type |
 | `macroescenario` | string | TV / Travel / Health |
 | `monto_oferta` | int | Loan amount |
-| `ola1.cuotas_optimas_*` | int | Wave-1 chosen # of installments at different amounts |
-| `ola2.error_estimacion_*` | float | Wave-2 errors estimating CTC / VC |
-| `ola2.error_recordacion_*` | float | Wave-2 recall errors for CTC / VC / CAE / # installments |
-| `ola2.grado_consistencia` | int (0–4) | # of consistent choices vs wave 1 |
-| `ola2.grado_corr.dominancia` | int (0–2) | # of times the dominant alternative was chosen |
-| `ola2.est_mercado` | string | Market comparison perception |
+| `ola1.cuotas_optimas_*` | int | Wave-1 chosen # of installments |
+| `ola2.error_*` | float | Wave-2 estimation/recall errors |
+| `ola2.grado_consistencia` | int (0–4) | Consistent choices vs wave 1 |
 | `dem.mujer` | int (0/1) | 1 if female |
-| `dem.liquidez` | float | Declared monthly liquidity for financial expenses |
+| `dem.liquidez` | float | Declared monthly liquidity |
 | `dem.lit_fin` | int (0–3) | Financial literacy score |
