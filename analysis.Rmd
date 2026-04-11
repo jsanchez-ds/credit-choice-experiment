@@ -1,0 +1,1165 @@
+---
+title: "Credit Choice Experiment — Discrete Choice Modeling"
+author: "Jonathan Sánchez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    theme: simplex
+    highlight: tango
+    toc: no
+  pdf_document:
+    toc: no
+encoding: UTF-8
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<p align="right"><b>Curso:</b> Ingeniería de Marketing, Marcel Goic</p>
+<p align="right"><b>Equipo Docente:</b> Joaquín Cisternas, Ignacio Hernández, Andrés Olivares, Agustín Hilcker</p>
+
+# {.tabset}
+
+## Enunciado
+
+Las decisiones financieras, constituyen una de las componentes más importante de las vidas de los ciudadanos contemporáneos. Sin embargo, muchas veces estas decisiones conllevan importantes niveles de endeudamiento. Según un informe de la Comisión para el Mercado Financiero (CMF) para deudores bancarios en Chile, la carga financiera es de un 16,9% y el apalancamiento de 3,6 veces el ingreso. Aunque los motivos del sobre-endeudamiento son variados, en lo que sigue, exploraremos si la estructura de la promoción digital de las ofertas de crédito tienen un impacto en decisiones financieras. Un mejor entendimiento de esta relación puede informar respecto a la necesidad de regular cómo se informan estos servicios.  
+
+Esta tarea se centrará en estudio de preferencias de créditos financieros a partir de la exposición de promociones digitales. En particular, se busca evaluar cómo el contenido y la _saliencia_ de la información sobre el costo del crédito pueden afectar el entendimiento de los usuarios de las consecuencias de adquirir un crédito y la preferencia de distintas ofertas de crédito. Para esto, diseñamos un estudio en que una muestra de usuarios son expuesto a una serie de seis decisiones ficticias en que deben elegir entre decisiones alternativas de crédito. 
+
+Una pregunta de primer orden de este estudio es si distintas configuraciones visuales de los avisos digitales, tienen algún impacto en cómo los usuarios forman preferencias respecto a ofertas de crédito. Para evaluar este impacto, los sujetos son aleatoriamente asignados a 4 condiciones experimentales, que difieren en la forma en que son expuestas las condiciones formales de los créditos: 
+
+- **Grupo de Control (GC):** Corresponde al la configuración típica de los avisos actuales del mercado chileno. 
+- **Tratamiento 1 (T1):** Se realza el costo total del crédito. 
+- **Tratamiento 2 (T2):** Se realza tanto el costo total del crédito como el valor de las cuotas.
+- **Tratamiento 3 (T3):** Toda la información financiera se realza en comparación a los otros elementos visuales del aviso. 
+
+Las condiciones experimentales se ilustran a continuación para el caso en que la promoción se motiva por la compra de un televisor. En el estudio se considera además, avisos motivados por un viaje de vacaciones o pagar una cuenta hospitalaria imprevista.  
+
+<p align="center">
+  <img width=90% src="ejemplo-wide.png">
+  <figcaption>Ilustración de las condiciones experimentales.</figcaption>
+</p>
+
+Otra pregunta relacionada pero difícil de evaluar está asociada a si el formato del despliegue de información afecta la _consistencia_ de las decisiones. En efecto, decisiones más consistentes debieran estar asociadas a un mejor entendimiento de las condiciones del crédito. Para evaluar la consistencia de las decisiones se evalúan las respuestas del experimento con respecto a las obtenidas por este mismo conjunto de participantes en una ola anterior, en que los sujetos decidían entre distintas ofertas de crédito _libres_ de material publicitario. En particular se les pidió elegir créditos en los siguientes dos formatos:
+
+a. _Número de cuotas_: Los sujetos mueven una barra ( _slider_ ) para definir el número de cuotas en que preferiría pagar un crédito de un monto dado. Acá, los sujetos se enfrentan a pagar menos cuotas de montos más altos, pero con menos interés o más cuotas de monto menor, pero con mayor interés. 
+b. _Tablas_: Los mismos pares de ofertas que se mostraran en la segunda ola, se presentan acá en tablas planas en que solo se muestra la información financiera (CAE, Costo total del crédito, valor cuota), sin ningún material publicitario. 
+    
+Para evaluar los factores que influyen en la decisión de compra de servicios financiero, a partir del experimento antes descrito, se construyó una base de datos ('credit-choice.csv') con las elecciones de cada individuo que formó parte del estudio y un listado de covariables relevantes como se indica a continuación. 
+
+- *choice_id:* Identificador de la elección. Como la elección es binaria, cada elección tiene dos filas. 
+- *numero_eleccion:* Identificador del número de la elección, que toma valores del 1 al 6. 
+- *idp:*	Identificador del participante. Como cada participante es expuesto a seis decisiones binarias, cada participante tiene asociadas doce filas. 
+- *feat.CantCuotas:* Cantidad de cuotas desplegada en la oferta. 
+- *feat.CAE:* Valor CAE desplegado en la oferta.
+- *feat.CTC:* Costo total de crédito desplegado en la oferta.
+- *feat.VC:* Valor cuota desplegado en la oferta. 
+- *choice:*	Variable binaria que indica si esa alternativa fue elegida por el participante. 
+- *option:*	Posición de la oferta (1 si se muestra a la derecha, 2 si se muestra a la izquierda)
+- *condicion_experimental:*	Condición experimental a la que fue asignado aleatoriamente el participante (GC, T1, T2, T3).
+- *type_cons:* Considerando que las elecciones podrían estar evaluando la consistencia de las elecciones respecto a la ola anterior, acá se denota qué tipo de consistencia se busca evaluar: consistencia_slider (cuando se compara a las decisiones de cuotas elegidas a través del _slider_), consistencia_tabla (cuando se compara a las decisiones desplegadas en tablas planas) y eleccion_dominada (cuando una alternativa domina a la otra y por tanto se espera que una alternativa sea ampliamente elegida respecto a la otra).
+- *macroescenario:* Escenario que motiva la adquisición del crédito (TV, Viaje, Salud)
+- *monto_oferta:* Monto por el cuál se motiva la adquisición del crédito (TV=200K, Viaje=1M, Salud=400K).
+- *ola1.cuotas_optimas_100k:* Numero de cuotas elegidas para pagar un crédito en de $100.000.
+- *ola1.cuotas_optimas_200k:*	Numero de cuotas elegidas para pagar un crédito en de $200.000.
+- *ola1.cuotas_optimas_400k:*	Numero de cuotas elegidas para pagar un crédito en de $400.000.
+- *ola1.cuotas_optimas_500k:* Numero de cuotas elegidas para pagar un crédito en de $500.000.
+- *ola1.cuotas_optimas_1m:*	Numero de cuotas elegidas para pagar un crédito en de $1.000.000.
+- *ola1.cuotas_optimas_5m:* Numero de cuotas elegidas para pagar un crédito en de $5.000.000.
+<!-- - ola1.eleccion_tabla_400k:  -->
+<!-- - ola1.eleccion_tabla_1m:	 -->
+- *ola2.error_estimacion_CTC_O2_E2:* Error en la estimación del Costo Total del Crédito (CTC) que hacen los participantes, usando la elección 2 del macro-escenario 2 (TV).
+- *ola2.error_estimacion_VC_O2_E2:*	Error en la estimación del Valor Cuota (VC) que hacen los participantes, usando la elección 2 del macro-escenario 2 (TV).
+- *ola2.error_esq_pago:* 1 si el participante no logra identificar cuál es la secuencia de pagos que correctamente representa la información presentada para una oferta seleccionada. 
+- *ola2.error_recordacion_CTC_O3_E2:*	Cuál es la diferencia entre el CTC recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).
+- *ola2.error_recordacion_Cuotas_O3_E2:* Cuál es la diferencia entre el númeeo de cuotas recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).	
+- *ola2.error_recordacion_CAE_O3_E2:*	Cuál es la diferencia entre el CAE recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).
+- *ola2.error_recordacion_VC_O3_E2:* Cuál es la diferencia entre el Valor Cuota recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).	
+- *ola2.grado_consistencia:* Número de veces que el participante fue consiste entre sus elecciones y las de la primera ola (0, 1, 2, 3 o 4).
+- *ola2.grado_corr.dominancia:*	Número de veces que el participante eligió la alternativa dominante en los dos escenarios en que existía dominancia (0, 1 o 2).
+- *ola2.est_mercado:*	Indica cómo el participante considera que la oferta presentada  se compara a las alternativas que típicamente observa en el mercado (más barato, más caro, similar, o no sabe). 
+- *dem.mujer:* 1 si la participante es mujer (0 si es hombre).
+- *dem.liquidez:* Cuanta liquidez mensual declara el participante para pagar en gastos financieros. 
+- *dem.lit_fin:* Puntaje de literacidad financiera. El puntaje máximo de tres, indica que el participante contestó correctamente las tres preguntas de literacidad financiera. 
+
+A partir de los datos propuestos describa qué factores resultan más relevantes para la elección de una oferta de crédito y caracterice el rol qué juega la arquitectura en que son desplegados la información financiera en la publicidad digital. 
+
+#### **Reglas del juego** 
+
+- Las tareas buscan replicar parcialmente las labores a las que se enfrentarían en el análisis de datos para el apoyo en la toma de decisiones, ya sea para una organización o para la definición de políticas. Por esto, se han propuesto preguntas relativamente abiertas que requieren que ustedes discutan y decidan cuál es el mejor enfoque de solución. Les pedimos que se involucren tempranamente en el desarrollo de la tarea para tener una discusión enriquecedora.
+
+- Todas las dudas, comentarios y errores publicarlos exclusivamente en el foro de u-cursos. De esta forma todos se benefician de las respuestas ofrecidas.
+
+- Consideramos que es muy importante que logren escribir un informe conciso con una redacción acorde de un informe técnico profesional. La presentación y comunicación de resultados es parte integral de la tarea y, por tanto, será evaluada cuidadosamente.
+
+- La tarea se desarrolla en grupos de máximo 3 integrantes. El entregable principal es un único markdown separado en tabs (a través de la opción .tabset). En el primer tab incluya todo el desarrollo de la tarea adecuadamente comentado. El segundo tab incluya el resumen de sus resultados de acuerdo a lo pedido en la pregunta 6. Este segundo tab es el que usarán en caso de que les corresponda presentar sus resultados. Considere también un tab con todos los procedimientos preliminares y otro para los anexos dónde puede incluir cualquier resultado complementario. 
+
+- Para entregar sus resultados suba, vía u-cursos, un único archivo comprimido llamado t2-A1-A2-A3.zip, donde A1, A2 y A3 es el primer apellido de los integrantes del grupo. Incluya también los nombres de los integrantes en el documento mismo. Incluya en el zip tanto el archivo .html de salida del markdown como los códigos fuentes que permitan reproducir sus resultados.
+
+- Para la pregunta final consideramos que 4 figuras son suficientes para resumir los aprendizajes más relevantes, pero si están convencidos de que agregar una figura adicional es absolutamente necesaria, ¡Adelante!
+
+* La fecha de entrega de la tarea es el <span style="color: navy">jueves 23 de noviembre</span> a las 23:59, sin excepciones y no habrá plazo extra para la entrega. Si por algún motivo de fuerza mayor se ve imposibilitado de entregar la tarea en el plazo estipulado, deberá escribir directamente al profesor explicando su situación. El profesor decidirá el curso de acción de acuerdo a los méritos del caso. Como siempre, es mejor dar cuenta de cualquier problema con la mayor anticipación posible. 
+
+* Recuerde que tenemos dos instancias de retroalimentación asociadas a la tarea:
+
+  1. La sesión, a realizarse el día <span style="color: navy">viernes 17 de noviembre</span>, está destinada para que expongan sus avances y dificultades y podamos discutir colectivamente cuáles son causes de acción razonables para resolver los problemas. A esta fecha se espera que los grupos al menos hayan explorado los datos y estimado algunos modelos preliminares. 
+  2. La sesión, a realizarse el día <span style="color: navy">viernes 24 de noviembre</span>, está destinada a que expongan los resultados más relevantes de su trabajo y resuman sus principales aprendizajes. Esta instancia busca simular una presentación final contra una contraparte interesada, como a las que se enfrentarán frecuentemente en su vida profesional. 
+  
+Aunque me gustaría que todos pudieran presentar, no tenemos tiempo para aquello por lo solo  seleccionaremos a aquellos que encuentren valor en esta instancia de aprendizaje. Las presentaciones tendrán una duración aproximada de 10 minutos y no es necesario que preparen material adicional. La salida del markdown debe ser lo suficientemente explicativa para comunicar sus resultados. 
+
+- A raíz de la opinión de los estudiantes, vamos a implementar una co-evaluación para que los estudiantes puedan valorar la participación de los compañeros y compañeras de grupo. Para calcular la nota final del alumno $j$ ponderaremos la nota grupal por $\max \left\{ \frac{J \cdot prom_j}{\sum_{k=1}^J prom_k} , 0.75 \right\}$, donde $prom_k$ corresponde al promedio de las co-evaluaciones recibidas por el estudiante $k$ dentro del grupo de $J$ integrantes.  
+
+- Recientemente hemos visto avances importantes en la aplicabilidad de herramientas de inteligencia artificial para generar contenido (e.g. [ChatGPT](https://chat.openai.com), [copilot](https://github.com/features/copilot), [alphacode](https://alphacode.deepmind.com)). Aunque es aún temprano para saber con precisión cuales serán las implicancias del uso de estas herramientas en el proceso de desarrollo, en este curso permitimos y fomentamos su uso. Si en el desarrollo de la tarea usan cualquiera de estas herramientas por favor incluyan un breve párrafo indicando que herramientas usaron y para qué. 
+
+- El equipo docente considera que la copia de tareas atenta en contra de tu aprendizaje y por tanto aplicará todas las medidas que estén a su disposición para desincentivar esta mala práctica.
+
+- El equipo docente considera que la copia de tareas atenta en contra de tu aprendizaje y por tanto aplicará todas las medidas que estén a su disposición para desincentivar esta mala práctica.
+
+## Preliminares
+
+Escriba acá todos los comandos que necesita ejecutar antes de abordar las preguntas de la tarea (carga de librerías, lectura de datos, limpieza de la data, transformación de variables y todo lo que necesite).
+
+#### Preparación Tarea
+Preliminares
+```{r P}
+#Preliminares 
+
+rm(list=ls())         # Limpia la lista de objetos 
+graphics.off()        # Limpia la lista de gráficos
+options(digits = 4)   # Número de dígitos a utilizar
+set.seed(123)         # Seed
+```
+
+```{r message=FALSE, warning=FALSE}
+#cargamos las librerias necesarias
+library(readr)      #Para leer el .csv
+library(glmnet)     #Ajusta modelo lineal
+library(ggplot2)    #Para realización de gráficos
+library(ggcorrplot) #Para realizar grafico correlacion
+library(fixest)     #Para correr modelos con efectos fijos
+library(tidyverse)  #Funcionalidades para manipular y desplegar datos
+library(kableExtra)   # Para formatear tablas
+library(modelsummary) # Para resumir resultados del modelo
+library(caret)          # for most ML models
+library(earth)          # for MARS
+library(randomForest)   # for random Forest.
+library(stargazer)  # Tablas
+library(gridExtra) #Graficos en una grilla
+library(mlogit)
+library(dplyr)
+library(gt)
+library(psych)
+library(kernlab)
+
+
+
+```
+
+Lectura base de datos
+```{r}
+df <- read.csv("credit-choice.csv", sep = ";", encoding = "UTF-8")
+```
+
+Se verifican los missing values por columna.
+```{r}
+colSums(is.na(df)) 
+
+```
+
+```{r}
+#dada la gran cantidad de NA que tiene ola2.error_recordacion_VC_O3_E2, se procede a eliminar 
+
+df <- df %>% select(-ola2.error_recordacion_VC_O3_E2)
+
+```
+
+```{r}
+# se crea la variable dummy estima_bien, que será usada para explorar el entendimiento
+rango_inferior <- 0
+rango_superior <- 10000
+
+df$estima_bien <- ifelse(abs(df$ola2.error_estimacion_CTC_O2_E2) >= rango_inferior & abs(df$ola2.error_estimacion_CTC_O2_E2) <= rango_superior, 1, 0)
+```
+
+
+```{r}
+# Se crean variables para usar en los modelos logit
+df <- df %>%
+  mutate(GC = ifelse(condicion_experimental == "GC", 1, 0),
+         T1 = ifelse(condicion_experimental == "T1", 1, 0),
+         T2 = ifelse(condicion_experimental == "T2", 1, 0),
+         T3 = ifelse(condicion_experimental == "T3", 1, 0))
+
+df <- df %>%
+  mutate(dominada = ifelse(type_cons == "eleccion_dominada", 1, 0),
+         TV = ifelse(macroescenario == "TV", 1, 0))
+
+# Crear la variable option_2
+df$option_2 <- ifelse(df$option == 2, "izquierda", "derecha")
+
+```
+
+
+## Desarrollo
+
+Documente acá el desarrollo de su tarea por pregunta.
+
+#### Pregunta 1 
+
+(1 punto) Realice un análisis exploratorio de los datos. En particular:
+
+- Describa qué variables que podrían tener efecto en la elección de ofertas, por ejemplo identificando qué atributos aparecen más frecuentemente entre aquellas ofertas que fueron elegidas por los participantes. 
+
+- Explore si las condiciones experimentales tienen alguna correlación con el entendimiento que tienen los participantes de las distintas ofertas y de la consistencia de sus decisiones.
+
+#### EDA 
+
+Se realizará la exploración de datos como primer acercamiento a entender el fenómeno a estudiar.
+
+Para estudiar qué caracteriza una mejor decisión financiera dada su promoción digital en distintos grupos experimentales, se pueden explorar distintas variables que ayudan a los agentes a modelar esta decisión. En particular, en este informe se desarrollará  principalmente con respecto a cuáles son las variables que influyen al tomar la elección de la oferta, pero también es relevante conocer si los participantes entendieron esa oferta, y si fueron consistentes en sus decisiones.
+
+
+Para comenzar realiza un summary a la base para ver las principales métricas de dispersión de las distintas variables.
+```{r}
+#decidir si usar esta o summary o ninguna
+
+describe(df)
+
+```
+
+Ya conociendo más a profundidad los tipos de datos que se manejarán en la tarea, se revisa la correlación entre algunas variables númericas de interés.
+
+
+```{r message=FALSE, warning=FALSE}
+# base númerica
+df2 <- df %>%
+  mutate_all(as.numeric)
+
+# Calcula la matriz de correlación
+cor_matrix <- cor(df2[c("feat.CTC", "feat.CAE", "feat.CantCuotas", "feat.VC")], use = "complete.obs")
+
+# Crea un gráfico de la matriz de correlación con ggcorrplot
+ggcorrplot(cor_matrix, hc.order = TRUE, type = "upper", lab = TRUE)
+
+```
+
+Se aprecia que, tal como se esperaba en general, entre las variables feat. que caracterizan la oferta, existe gran correlación. Por ejemplo, se nota que el costo total del crédito correlaciona positivamente en gran medida con la cantidad de cuotas que tiene y el CAE, y en menor medida pero también positivamente con el valor de la cuota.
+
+Ahora, se realizarán conteos y caracterizaciones generales del estudio.
+
+Se visualizará cómo se distribuyen las variables demográficas presentes en la data. En primer lugar, la distribución de género.
+
+```{r message=FALSE, warning=FALSE}
+# Contamos la cantidad de cada género y luego los metemos a un dataframe
+conteo_genero <- table(df$dem.mujer)
+
+datos_genero <- data.frame(Genero = factor(names(conteo_genero), labels = c("Hombre", "Mujer")), Cantidad = as.vector(conteo_genero/12))
+
+# Creamos gráfico de torta
+ggplot(datos_genero, aes(x = "", y = Cantidad, fill = Genero, label = Cantidad)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = Cantidad), position = position_stack(vjust = 0.5), color = "white", size = 5) +  
+  coord_polar(theta = "y") +  # Convertir el gráfico en uno de torta
+  labs(title = "Distribución de Género") +
+  scale_fill_manual(values = c("Hombre" = "blue", "Mujer" = "pink")) + 
+  theme_void()
+
+```
+
+Luego se ve la distribución de la liquidez mensual para gastos financieros.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(df, aes(x = dem.liquidez)) +
+  geom_histogram(binwidth = 10000, fill = "blue", color = "white", alpha = 0.7) +
+  labs(title = "Distribución de Ingresos en Intervalos de Liquidez",
+       x = "Liquidez",
+       y = "Frecuencia en la base") +
+  theme_minimal() +
+  xlim(0, 90000)+
+  ylim (0,900)# 
+```
+
+Finalmente se visualiza la cantidad de personas en cada puntaje de literacidad financiera.
+
+
+```{r message=FALSE, warning=FALSE}
+# conteo en cada puntaje de lit.fin
+conteo_lit_fin <- df %>%
+  group_by(dem.lit_fin, idp) %>%
+  summarise(count = n_distinct(idp))
+
+# gráfico
+ggplot(conteo_lit_fin, aes(x = factor(dem.lit_fin), y = count, fill = factor(dem.lit_fin))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Distribución puntajes literacidad financiera",
+       x = "Puntaje literacidad financiera",
+       y = "Cantidad de Personas") +
+  theme_minimal()
+```
+
+Al revisar las 3 gráficas, se puede apreciar que el experimento incluye una proporción similar de hombres y mujeres, que la liquidez mensual que declaran tener para gastos financieros se distribuye en su mayoría en valores cercanos a los $50.000, y que las personas del estudio se encuentran acumuludas entre el puntaje 1 y 2 de literacidad financiera, teniendo que el puntaje máximo (3) es el que se encuentra en menor cantidad.
+
+Ahora, se procede a estudiar los créditos que son ofrecidos en cada macroescenario.
+
+```{r message=FALSE, warning=FALSE}
+# Calcular el CTC promedio por cada macroescenario
+ctc_promedio <- df %>%
+  group_by(macroescenario) %>%
+  summarise(ctc_promedio = mean(feat.CTC, na.rm = TRUE))
+
+# Gráfico 
+ggplot(ctc_promedio, aes(x = macroescenario, y = ctc_promedio, fill = macroescenario)) +
+  geom_bar(stat = "identity") +
+  labs(title = "CTC Promedio por Macroescenario",
+       x = "Macroescenario",
+       y = "CTC Promedio") +
+  theme_minimal()
+
+
+```
+
+Se desprende que los créditos más costosos están en la categoría de viaje, seguido de salud y TV. Será interesante notar en los modelos si cómo afecta el macroescenario a la desición tomada.
+
+
+Otro conteo que vale la pena realizar es el de la cantidad de personas en cada condición experimental.
+
+```{r message=FALSE, warning=FALSE}
+# Conteo
+conteo_personas <- df %>%
+  distinct(idp, condicion_experimental) %>%
+  group_by(condicion_experimental) %>%
+  summarise(cantidad_personas = n())
+
+# Gráfico de torta con etiquetas
+ggplot(conteo_personas, aes(x = "", y = cantidad_personas, fill = condicion_experimental)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = cantidad_personas), position = position_stack(vjust = 0.5)) +
+  labs(title = "Conteo de Personas por Condición Experimental",
+       x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+
+
+```
+
+Se ve que la mayor cantidad de personas se encuentran en el grupo de control (GC), seguidos de tratamiento 1(T1), tratamiento 2(T2) y tratamiento 3(T3).
+
+
+
+Para finalizar con los conteos previo a la exploración de variables relevantes para el estudio, se visualiza la cantidad de elecciones que recibió cada alternativa (izquierda o derecha).
+
+```{r}
+# Contar la cantidad de elecciones por opción
+conteo_elecciones <- df %>%
+  group_by(option) %>%
+  summarise(cantidad_elecciones = sum(choice == 1))
+
+# Gráfico de torta con etiquetas
+ggplot(conteo_elecciones, aes(x = "", y = cantidad_elecciones, fill = factor(option, labels = c("Derecha", "Izquierda")))) +
+  geom_bar(stat = "identity") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = cantidad_elecciones), position = position_stack(vjust = 0.5)) +
+  labs(title = "Cantidad de Elecciones por Opción",
+       x = NULL,
+       y = NULL,
+       fill = "Alternativa") +  
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+
+
+
+
+```
+
+Este resultado viene a ratificar que el experimento radica en caracterizar el contenido de la mejor oferta, ya que los tomadores de decisión eligen indiscriminadamente entre la posición de esta.
+
+
+Tal como se había mencionado anteriormente, caracterizar o describir una mejor decisión financiera no posee un criterio único. Se comenzará por estudiar qué variables tienen efecto sobre las ofertas que fueron elegidas y la respectiva cuantificación de ese efecto.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# CTC promedio vs choice
+graf1 <- ggplot(df, aes(x = factor(choice), y = feat.CTC, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Costo total crédito (promedio) ",
+       x = "Elección",
+       y = "Valor Promedio de CTC",
+       fill = "Choice") +
+  theme_minimal()
+
+
+# cuotas promedio vs choice
+graf2 <- ggplot(df, aes(x = factor(choice), y = feat.CantCuotas, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Cantidad de cuotas (promedio)",
+       x = "Elección",
+       y = "Valor Promedio de cuotas",
+       fill = "Choice") +
+  theme_minimal()
+
+# cae promedio vs choice
+graf3 <- ggplot(df, aes(x = factor(choice), y = feat.CAE, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "CAE (promedio)",
+       x = "Elección ",
+       y = "Valor Promedio de CAE",
+       fill = "Choice") +
+  theme_minimal()
+
+# valor cuota vs choice
+graf4 <- ggplot(df, aes(x = factor(choice), y = feat.VC, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Valor cuota (promedio)",
+       x = "Elección",
+       y = "Valor Promedio de valor cuota",
+       fill = "Choice") +
+  theme_minimal()
+
+# Organizar los gráficos en una grilla
+grid.arrange(graf1, graf2, graf3, graf4, ncol = 2)
+```
+
+De esta forma, quedan claras las diferencias entre las alternativas que son escogidas v/s las que no. En particular, se puede apreciar que los participantes eligen en promedio: créditos menos costosos, créditos con menor cantidad de cuotas, créditos con un CAE menor, créditos con un valor de cuota más grande.
+
+Con esto, no se quiere concluir que la elección de una mejor oferta será siempre la de créditos que cumplan esas características, ya que esta es una decisión a nivel individual que claramente tiene una componente de restricción presupuestaria de los individuos, por tanto la elección de una alternativa no siempre será la mejor decisión para todas las personas. Así, será interesante caracterizar qué y cómo influencia la decisión en los modelos a realizar más adelante.
+
+
+Otras aristas que valen la pena explorar son el entendimiento y la consistencia en la elección de las ofertas, particularmente se verificará la correlación entre estas y el estar en alguna de las condiciones experimentales.
+
+Partiendo por la consistencia, se buscará explorar la variable ola2.grado_consistencia, para observar la distribución de la cantidad de veces que fueron consistentes los participantes en cada una de sus elecciones entre la primera y segunda ola, en cada condición experimental.
+
+```{r}
+# Se filtran distintas bases por condicion experimental
+df_gc <- df %>% filter(condicion_experimental == "GC")
+df_t1 <- df %>% filter(condicion_experimental == "T1")
+df_t2 <- df %>% filter(condicion_experimental == "T2")
+df_t3 <- df %>% filter(condicion_experimental == "T3")
+
+# luego se realizan conteos en cada base
+conteo_consistencia_gc <- df_gc %>%
+  group_by(ola2.grado_consistencia) %>%
+  summarise(Cantidad_GC = n_distinct(idp))
+
+conteo_consistencia_t1 <- df_t1 %>%
+  group_by(ola2.grado_consistencia) %>%
+  summarise(Cantidad_T1 = n_distinct(idp))
+
+conteo_consistencia_t2 <- df_t2 %>%
+  group_by(ola2.grado_consistencia) %>%
+  summarise(Cantidad_T2 = n_distinct(idp))
+
+conteo_consistencia_t3 <- df_t3 %>%
+  group_by(ola2.grado_consistencia) %>%
+  summarise(Cantidad_T3 = n_distinct(idp))
+
+# se crean los graficos
+plot_gc <- ggplot(conteo_consistencia_gc, aes(x = factor(ola2.grado_consistencia), y = Cantidad_GC, fill = factor(ola2.grado_consistencia))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consistencia en GC",
+       x = "Puntaje consistencia",
+       y = "Cantidad de Personas") +
+  theme_minimal()
+
+plot_t1 <- ggplot(conteo_consistencia_t1, aes(x = factor(ola2.grado_consistencia), y = Cantidad_T1, fill = factor(ola2.grado_consistencia))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consistencia en T1",
+       x = "Puntaje consistencia",
+       y = "Cantidad de Personas") +
+  theme_minimal()
+
+plot_t2 <- ggplot(conteo_consistencia_t2, aes(x = factor(ola2.grado_consistencia), y = Cantidad_T2, fill = factor(ola2.grado_consistencia))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consistencia en T2",
+       x = "Puntaje consistencia",
+       y = "Cantidad de Personas") +
+  theme_minimal()
+
+plot_t3 <- ggplot(conteo_consistencia_t3, aes(x = factor(ola2.grado_consistencia), y = Cantidad_T3, fill = factor(ola2.grado_consistencia))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consistencia en T3",
+       x = "Puntaje consistencia",
+       y = "Cantidad de Personas") +
+  theme_minimal()
+
+
+grid.arrange(plot_gc, plot_t1, plot_t2, plot_t3, ncol = 2)
+
+
+
+```
+
+Tal como se puede apreciar en la grilla, en realidad el puntaje de consistencia se distibuye de una forma similar en todas las condiciones experimentales. Si bien en T3 el tamaño de la barra del puntaje 4 es más grande en comparación a los demás grupos, no se diferencia tanto como para inducir que en T3 las personas son más consistentes.
+
+Así, al observar la misma tendencia en todos los grupos experimentales, se puede concluir a priori que el experimento está bien aleatorizado y que la consistencia parece no depender del grupo experimental al cual se fue asignado, lo cual sugiere dudar de la efectividad de las diferencias entre los avisos promocionales.
+
+
+Para buscar ampliar esta conclusión, se seguirá con el estudio del entendimiento.
+
+Se buscará hacer una exploración con respecto a la variable ola2.error_esq_pago como un proxy del entendimiento. De este modo, los participantes que tienen 0 se identifican como personas que entendieron la oferta(identificó secuencia) y 1 quienes no. De igual manera, se realizarán conteos para ver la distribución de esta variable en las distintas condiciones experimentales.
+
+```{r message=FALSE, warning=FALSE}
+# Crear los dataframes con el conteo de personas únicas para ola2.error_esq_pago igual a 1 y 0
+conteo_error_gc <- df_gc %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_GC = n_distinct(idp))
+
+conteo_error_t1 <- df_t1 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T1 = n_distinct(idp))
+
+conteo_error_t2 <- df_t2 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T2 = n_distinct(idp))
+
+conteo_error_t3 <- df_t3 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T3 = n_distinct(idp))
+
+# Crear los gráficos de barras apiladas
+plot_error_gc <- ggplot(conteo_error_gc, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_GC, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en GC",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  # Ajuste del eje y
+  theme_minimal()
+
+plot_error_t1 <- ggplot(conteo_error_t1, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T1, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T1",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_error_t2 <- ggplot(conteo_error_t2, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T2, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T2",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_error_t3 <- ggplot(conteo_error_t3, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T3, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T3",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+# Crear la grilla
+grid.arrange(plot_error_gc, plot_error_t1, plot_error_t2, plot_error_t3, ncol = 2)
+
+```
+
+En la grilla se aprecia que la tendencia en todos los grupos experimentales es la misma, la cantidad de personas que identifican la secuencia (y por tanto entienden la oferta) supera por mucho a las que no identifican la oferta. Si bien en T2 y T3 la barrita de personas que no identifican la secuencia es mas pequeña (mostrando un mejor entendimiento), se debe recordar que tal como se observó anteriormente, estos grupos están compuestos por una menor cantidad de personas, por lo que la proporción es similar a la de los otros grupos también. 
+
+Otra variable que puede servir para estudiar el entendimiento es "ola2.grado_corr.dominancia", ya que esta entrega un puntaje de cuántas veces fue escogida la opción que presentaba una dominancia. De esta forma se considera que escoger la opción dominante muestra un entendimiento mayor de cual oferta se debe escoger.
+
+```{r message=FALSE, warning=FALSE}
+# Crear dataframes con los conteos
+conteo_gc <- df_gc %>%
+  group_by(ola2.grado_corr.dominancia) %>%
+  summarise(Cantidad_GC = n_distinct(idp))
+
+conteo_t1 <- df_t1 %>%
+  group_by(ola2.grado_corr.dominancia) %>%
+  summarise(Cantidad_T1 = n_distinct(idp))
+
+conteo_t2 <- df_t2 %>%
+  group_by(ola2.grado_corr.dominancia) %>%
+  summarise(Cantidad_T2 = n_distinct(idp))
+
+conteo_t3 <- df_t3 %>%
+  group_by(ola2.grado_corr.dominancia) %>%
+  summarise(Cantidad_T3 = n_distinct(idp))
+
+# Unir los dataframes
+conteo_total <- full_join(conteo_gc, conteo_t1, by = "ola2.grado_corr.dominancia") %>%
+  full_join(conteo_t2, by = "ola2.grado_corr.dominancia") %>%
+  full_join(conteo_t3, by = "ola2.grado_corr.dominancia") %>%
+  replace(is.na(.), 0)  # Reemplazar NAs con 0
+
+# Crear tabla con gt
+tabla_comparativa <- conteo_total %>%
+  gt() %>%
+  tab_spanner(label = "GC", columns = vars(Cantidad_GC)) %>%
+  tab_spanner(label = "T1", columns = vars(Cantidad_T1)) %>%
+  tab_spanner(label = "T2", columns = vars(Cantidad_T2)) %>%
+  tab_spanner(label = "T3", columns = vars(Cantidad_T3)) %>%
+  fmt_number(columns = vars(Cantidad_GC, Cantidad_T1, Cantidad_T2, Cantidad_T3), decimals = 0) %>%
+  tab_header(title = "Comparación de Cantidad de Personas por Puntaje de dominancia")
+tabla_comparativa
+```
+
+Nuevamente se observa que en todos los grupos experimentales el comportamiento es similar, la mayoría de las personas escoge en sus 2 elecciones dominadas, la oferta que presenta mejores condiciones. Será interesante hacer un "doble click" de esto en los modelos.
+
+
+Como una última exploración de datos para revisar el entendimiento entre las distintas condiciones experimentales, se define una variable "estima_bien" a partir de ola2.error_estimacion_CTC_O2_E2. Esta dummy toma el valor 1 cuando se considera que el participante entendió bien la oferta (valor absoluto del error de estimación del costo total del crédito con elección 2 en TV es menor a 10.000) y 0 si no la entendió (por tanto el error de estimación está por sobre 10.000).
+
+```{r message=FALSE, warning=FALSE}
+
+#se realizan los conteos
+conteo_estima_bien_gc <- df_gc %>%
+  group_by(estima_bien, idp) %>%
+  summarise(countgc = n_distinct(idp))
+df_gc_tv <- df_gc %>% filter(macroescenario == "TV")
+
+conteo_estima_bien_t1 <- df_t1 %>%
+  group_by(estima_bien, idp) %>%
+  summarise(countt1 = n_distinct(idp))
+df_t1_tv <- df_t1 %>% filter(macroescenario == "TV")
+
+conteo_estima_bien_t2 <- df_t2 %>%
+  group_by(estima_bien, idp) %>%
+  summarise(countt2 = n_distinct(idp))
+df_t2_tv <- df_t2 %>% filter(macroescenario == "TV")
+
+conteo_estima_bien_t3 <- df_t3 %>%
+  group_by(estima_bien, idp) %>%
+  summarise(countt3 = n_distinct(idp))
+df_t3_tv <- df_t3 %>% filter(macroescenario == "TV")
+
+# se crean los gráficos
+plot_gc <- ggplot(conteo_estima_bien_gc, aes(x = factor(estima_bien), y = countgc, fill = factor(estima_bien))) +
+  geom_bar(stat = "identity") +
+  labs(title = "GC",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Estima bien") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_t1 <- ggplot(conteo_estima_bien_t1, aes(x = factor(estima_bien), y = countt1, fill = factor(estima_bien))) +
+  geom_bar(stat = "identity") +
+  labs(title = "T1",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Estima bien") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_t2 <- ggplot(conteo_estima_bien_t2, aes(x = factor(estima_bien), y = countt2, fill = factor(estima_bien))) +
+  geom_bar(stat = "identity") +
+  labs(title = "T2",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Estima bien") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_t3 <- ggplot(conteo_estima_bien_t3, aes(x = factor(estima_bien), y = countt3, fill = factor(estima_bien))) +
+  geom_bar(stat = "identity") +
+  labs(title = "T3",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Estima bien") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+
+# Crear la grilla
+grid.arrange(plot_gc, plot_t1, plot_t2, plot_t3, ncol = 2)
+
+
+```
+
+Observando la grilla de gráficos, a excepción de T2, en todos los grupos experimentales se observa una tendencia a estimar mal los costos totales que tendrán los créditos, sin embargo, se debe recordar que estas tendencias pueden deberse al método de creación de la variable, ya que se eligió un umbral arbitrario que puede beneficiar a algún grupo. Es así como se llegarán a mejores conclusiones en los modelos.
+
+Viendo las 3 aproximaciones al entendimiento de las ofertas entre condiciones experimentales, se puede llegar a una conclusión similar a la obtenida con la consistencia, y es que parece no haber evidencia de correlación entre estar en algún grupo experimental
+y poseer un mejor entendimiento de la oferta, por lo que para llegar a conclusiones más robustas respecto a la efectividad de algún formato publicitario sobre la caracterización de los ofertas, se deberá disponer de mayores herramientas a lo largo del desarrollo del informe.
+
+Concluyendo la exploración de datos, se menciona que sin duda entrega una mejor base para enfrentar el desafío que supone construir modelos que estudien las decisiones financieras de manera eficaz, ya que este análisis destila, tanto las variables que serán utilizadas, así como también una idea preliminar de cómo se comportan frente a la elección de una u otra alternativa.
+
+#### Pregunta 2
+
+(1 punto) Usando los resultados del análisis exploratorio, proponga y estime un modelo de elección discreta _sin_ heterogeneidad no observable, para caracterizar la oferta seleccionada por el participante. Interprete sus resultados y discuta las limitaciones del modelo propuesto. 
+
+Se propondrá un modelo de elección discreta (binaria) sin heterogeneidad no observable con el objetivo de caracterizar la oferta seleccionada por el participante.
+
+Se creará un modelo logit, por lo que como primer paso se debe formatear los datos para el correcto uso del paquete "mlogit".
+
+```{r}
+#se toma la base con las variables para hacer los modelos, personalizando sus nombres
+
+mydf <- data.frame(ch=df$choice, option =df$option_2, CAE=df$feat.CAE, CantCuotas = df$feat.CantCuotas, choice_id = df$choice_id, idp = df$idp, T3=df$T3, mujer=df$dem.mujer, mujerT3=df$dem.mujer*df$T3,CantCuotasT3=df$feat.CantCuotas*df$T3, lit_finT3=df$dem.lit_fin*df$T3,  estima_bienT3=df$estima_bien*df$T3, dominada=df$dominada, TV=df$TV)
+
+#format the data
+df_mlogit <- mlogit.data(mydf, choice="ch", shape="long",  alt.var="option", chid.var = "choice_id", id.var="idp" )
+head(as.data.frame(df_mlogit),n=6)
+```
+
+El modelo que se estimará guarda estrecha relación con las variables exploradas en el apartado anterior. En particular, se piensa caracterizar la oferta teniendo el CAE y la cantidad de cuotas como variables que pueden decidir una preferencia por el crédito a tomar, además de una serie de variables entre demográficas y disposiciones del experimento que serán de ayuda para ver los efectos que tienen este tipo de condiciones sobre la alternativa escogida por los participantes. Se explicarán estas variables y el sentido de su inclusión:
+
+-T3: Variable dummy que toma un 1 si el participante está en el grupo de tratamiento 3, la cual sera de utilidad para ver diferencias en la elección entre estar en este grupo y pertenecer a alguno de los otros 3, ya que se considera que la publicidad digital de este grupo posee mayores diferencias. (por ejemplo, n° de cuotas y costo total más grandes)
+
+-mujerT3: es una variable que guarda la información con la interacción entre ser mujer y estar en el grupo de tratamiento 3. Con esto, se quiere medir el efecto sobre la elección de quienes cumplen con esa condición.
+
+-CantCuotasT3: interacción entre la cantidad de cuotas y pertenecer al grupo 3, para ver la utilidad que genera en la elección el formato de la cantidad de cuotas desplegado en la publicidad.
+
+-estima_bienT3: interacción entre la variable estima_bien y la variable T3, para estimar diferencias que puedan explicar por qué personas que están en T3 escogen ciertas alternativas dado que estimaron bien el costo del crédito.
+
+-lit_finT3: interacción entre la variable de literacidad financiera y T3, para entender cómo afecta la decisión de personas con mayor o menos literacidad financiera en este grupo experimental.
+
+-TV: se busca ver como afecta la decisión que esta sea en el macroesenario TV en comparación a los niveles base que quedan (viaje y salud).
+
+-dominada: se busca entender cómo se comporta la elección de una alternativa u otra cuando se presenta la situación que una opción domina a la otra.
+
+```{r}
+# se crea el modelo y se reportan los resultados
+modelp2 <- mlogit(ch ~ CAE + CantCuotas | mujerT3 + T3 + CantCuotasT3 +estima_bienT3 + lit_finT3 + TV + dominada, df_mlogit)
+
+modelsummary (list('Logit'=modelp2), 
+              estimate  = "{estimate}{stars}",
+              statistic = NULL)
+```
+
+A partir de los resultados del modelo logit, se observa el impacto que tienen algunas variables e interacciones sobre el consumidor al momento de decidir qué oferta escogerá.
+
+Para comenzar con la interpretación de los resultados, se observa la presencia de un intercepto positivo y significativo que indica que la utilidad base de escoger la alternativa de la izquierda supera a la de la derecha cuando todas las demas variables que se pueden considerar son 0. 
+
+Ahora bien, caracterizando las ofertas escogidas, se observa que el coeficiente de la variable CAE es significativo, del cual se puede desprender que las personas tienden a escoger ofertas con menor CAE.Es importante mencionar que, si bien es cierto que la magnitud del coeficiente es pequeña, es relevante considerar esta variable si se desea poner en marcha una campaña publicitaria. Por otro lado, se evidencia que un mayor número de cuotas en el crédito expuesto en la oferta,disminuye la probabilidad de que esta sea escogida.
+
+Otra parte relevante del modelo construido es la interacción de variables. Si bien es cierto que varias de ellas no tienen una confianza mínima del 90%, de aquellas que alcanzaron ese umbral se pueden interpretar ideas interesantes para la construcción de ofertas y el valor que genera en los clientes. En particular, lo que se puede observar en la interacción "dominada x izquierda" proporciona evidencia significativa de que cuando una opción es dominada, la probabilidad de escoger la opción izquierda disminuye considerablemente, lo cual es relevante a la hora de diseñar la oferta publicitaria. Lo mismo se observa cuando se está en presencia de una oferta de TV.
+
+Por otro lado, nuevamente se obtienen resultados poco concluyentes respecto a el efecto que tiene estar en una u otra condición experimental sobre la elección de oferta, en particular, sobre estar en el grupo de tratamiento 3 vs GC, T1 o T2. Como se mencionó anteriormente, estas interacciones entregaron un efecto no significativo y de baja magnitud. Con esto, no se puede decir mucho sobre la diferencia que marca solamente estar en T3, o estar en T3 y a la par ser mujer o tener una mayor o menor literacidad financiera.
+
+Con respecto a las métricas, el modelo posee un R^2 ajustado aproximado de un 0,35, que, pese a no llegar a valores altos como los que solemos obtener con regresiones lineales, el modelo logit generado nos ofrece una buena aproximación del comportamiento del cliente descrito en los datos.
+
+En definitiva, se pueden observar comportamientos marcados principalmente por la preferencia del cliente en ofertas con un menor CAE y menores cuotas. Aunque lo anterior no descarta de ninguna manera que otras características del entorno puedan influir en la elección de oferta. 
+
+Finalmente, es importante mencionar que la caracterización descrita en este modelo tiene limitantes que no permiten extraer con mayor eficiencia el aprendizaje de los datos tal como se fue mencionando a lo largo de la descripción. Algunas de las limitaciones, sin ir más lejos, pueden provenir de no incluir heterogeneidad no observable, como también de la interpretación de interacciones no significativas. Otro factor que podría ser limitante depende de la relevancia y exhaustividad de las variables escogidas para representar las preferencias de los participantes.
+
+#### Pregunta 3
+
+(1 punto) Extienda el modelo anterior para incorporar heterogeneidad no observable y cualquier otro comportamiento que le parezca relevante para aminorar las limitaciones del modelo planteado en la parte anterior. Interprete sus resultados y discuta si este nuevo modelo debiera preferirse al modelo anterior.
+
+
+Se extiende el modelo anterior, modificando el código tal que se pueda incorporar heterogeneidad no observable en las covariables que caracterizan la elección.
+
+```{r message=FALSE, warning=FALSE}
+modelp3 <- mlogit(ch ~ CAE + CantCuotas | mujerT3 + T3 + CantCuotasT3 + estima_bienT3 + lit_finT3 + TV + dominada, 
+                     rpar = c('(Intercept):izquierda'='n', 
+                              CAE='n', CantCuotas='n','mujerT3:izquierda'='n','T3:izquierda'='n','CantCuotasT3:izquierda'='n','estima_bienT3:izquierda'='n','lit_finT3:izquierda'='n','TV:izquierda'='n','dominada:izquierda'='n'), 
+                     correlation = TRUE, print.level = 1, df_mlogit)
+```
+
+Luego se reportan los resultados:
+
+```{r message=FALSE, warning=FALSE}
+modelsummary(list('Mixed Logit (Corr)'=modelp3),
+             estimate  = "{estimate}{stars}",
+             statistic = NULL)
+```
+
+Al integrar heterogeneidad no observable, se evidencia una tendencia similar en el comportamiento de ciertas variables con respecto al modelo de la parte 2. Por ejemplo, en el caso de las variables CAE y Cantidad de cuotas, se observa que una mayor cantidad de cuotas o un alto CAE disminuye la probabilidad de elegir dicha opción. Otra variable destacada es la interacción entre el tratamiento 3 e izquierda, donde se puede observar que es significativa, con un coeficiente de 21.336. Esto indicaría que, dado que se sometió al tratamiento 3, hay una alta probabilidad de elegir una opción de la izquierda en comparación con otros tipos de tratamiento.
+
+Las interacciones de las variables que contienen el término "Chol" se refieren a la utilización de la matriz de Cholesky para modelar la correlación entre los efectos aleatorios. En particular, se observa que varias de estas interacciones son significativas y ayudan a explicar de manera más completa el comportamiento no observable. En comparación con el modelo creado para la pregunta anterior, este modelo mixto logit captura la heterogeneidad no observable, abordando así una de las limitaciones del primer modelo. Se destaca que el modelo para esta pregunta tiene un mayor R^2 (0.369 vs. 0.347) y posee un AIC ligeramente menor (3631.1 vs. 3641.4).
+
+En relación con lo mencionado, el equipo esperaba que la inclusión de la heterogeneidad no observable mejorara el desempeño del modelo de la parte 2 aún más de lo que realmente lo hizo. Aunque mejoró solo un poco, se puede decir que la inclusión de la heterogeneidad no observable es relevante al modelar la decisión de elección de los clientes.
+
+Es sabido que el modelo desarrollado en esta pregunta es más complejo que el desarrollado en la pregunta anterior, y en consecuencia, también es más difícil de interpretar. En línea con lo anterior, y para responder a la pregunta de cuál modelo el equipo debería preferir, se considera que, si bien es cierto que el modelo de la pregunta 3 que considera la heterogeneidad no observable es más complejo y entrega ciertos insights significativos, por una cuestión de interpretabilidad, el modelo más simple (el de la pregunta 2) logra capturar ciertas tendencias de comportamiento relevantes para el caso de estudio, con la ventaja adicional de que se pueden extraer aprendizajes de manera más directa.
+
+#### Pregunta 4 
+
+(1 punto) Incluya al menos dos modelos que utilicen el enfoque de
+*machine learning* para predecir la oferta que elegirá cada participante. Incluya todas las variables y evalúe su rendimiento a partir de las métricas de pronóstico que le parezcan razonable. Discuta respecto a las ventajas y desventajas de estos modelos respecto a los modelos planteados anteriormente y provea una recomendación respecto a qué modelo preferiría usar.
+
+
+##### Preparación de datos para P4
+```{r P4}
+# Se modifica un poco la base para mejorar interpretación
+df$option <- ifelse(df$option == 1, "Derecha", "Izquierda")
+df$choice <- ifelse(df$choice == 1, "Elige", "NoElige")
+
+# Variables a utilizar para el modelo
+df_ml <- df[c("feat.CantCuotas", "feat.CAE","feat.VC", "condicion_experimental",
+  "type_cons", "macroescenario", "monto_oferta", "dem.mujer",
+  "dem.liquidez", "dem.lit_fin", "option", "choice")]
+
+df_ml<- na.omit(df_ml)
+
+# Reemplazo de los niveles del factor con nombres válidos
+levels(df_ml$choice) <- make.names(levels(df_ml$choice))
+levels(df_ml$option) <- make.names(levels(df_ml$option))
+```
+
+Se decidió considerar las variables de las ofertas, condición experimental, tipo de consistencia, el contexto del escenario y todos los aspectos demográficos. Adicionalmente se agregó la variable option para predecir.
+
+```{r}
+table(df_ml$option, df_ml$choice) %>% kbl() %>% 
+  kable_classic(full_width = F, html_font = "Trebuchet MS")
+```
+
+Partición en base train y base test
+
+```{r}
+s.train <- sample(1:nrow(df_ml), size=round(0.8*nrow(df_ml),0))
+df_ml.train <- df_ml[s.train,]
+df_ml.test  <- df_ml[-s.train,]
+```
+
+
+##### CART
+
+```{r message=FALSE, warning=FALSE}
+f <- as.formula(choice ~ .- choice)
+
+train.cart <- train(f, data=df_ml.train, method="rpart",
+                   trControl = trainControl("cv", number=10, classProbs = TRUE, 
+                                             summaryFunction = twoClassSummary,
+                                             sampling = "smote"),
+                   preProcess = c("center","scale"),
+                   metric = "ROC")
+```
+
+```{r message=FALSE, warning=FALSE}
+train.cart$results
+```
+
+```{r message=FALSE, warning=FALSE}
+test.cart <- predict(train.cart, newdata=df_ml.test)
+CM.cart   <- confusionMatrix(test.cart, as.factor(df_ml.test$choice))
+CM.cart$table %>% kbl(digits=3) %>% 
+  kable_classic(full_width = F, html_font = "Trebuchet MS")
+```
+
+
+##### SVM
+
+```{r}
+train.svm <- train(f, data=df_ml.train, method="svmLinear",
+                   trControl = trainControl("cv", number=10, classProbs = TRUE,
+                                            summaryFunction = twoClassSummary,
+                                            sampling = "smote"),
+                   preProcess = c("center","scale"),
+                   metric = "ROC")
+```
+
+```{r}
+train.svm$results
+```
+
+```{r}
+test.svm <- predict(train.svm, newdata=df_ml.test)
+CM.svm   <- confusionMatrix(test.svm, as.factor(df_ml.test$choice))
+CM.svm$table %>% kbl(digits=3) %>% 
+  kable_classic(full_width = F, html_font = "Trebuchet MS")
+```
+
+##### KNN
+```{r}
+train.knn <- train(f, data=df_ml.train, method="knn",
+                   trControl = trainControl("cv", number=10, classProbs = TRUE,
+                                             summaryFunction = twoClassSummary,
+                                             sampling = "smote"),
+                   preProcess = c("center","scale"),
+                   metric = "ROC")
+```
+
+```{r}
+train.knn$results
+```
+
+```{r}
+test.knn <- predict(train.knn, newdata=df_ml.test)
+CM.knn   <- confusionMatrix(test.knn, as.factor(df_ml.test$choice))
+CM.knn$table %>% kbl(digits=3) %>% 
+  kable_classic(full_width = F, html_font = "Trebuchet MS")  
+```
+
+
+##### Random Forest
+
+```{r}
+train.rf <- train(f, data=df_ml.train, method="rf",
+                  trControl = trainControl("cv", number=10, classProbs = TRUE,
+                                           summaryFunction = twoClassSummary,
+                                           sampling = "smote"),
+                  preProcess = c("center","scale"),
+                  metric = "ROC")
+```
+
+```{r}
+train.rf$results
+```
+
+```{r}
+test.rf <- predict(train.rf, newdata=df_ml.test)
+CM.rf   <- confusionMatrix(test.rf, as.factor(df_ml.test$choice))
+CM.rf$table %>% kbl(digits=3) %>% 
+  kable_classic(full_width = F, html_font = "Trebuchet MS")
+```
+
+##### Comparando modelos
+
+```{r}
+results <- resamples(list(cart=train.cart, svm=train.svm,knn=train.knn, rf=train.rf))
+results$values
+```
+
+##### Métricas
+
+ROC
+```{r}
+summary(results)$statistics$ROC %>% kbl(digits=3, caption="ROC") %>% 
+  kable_styling(full_width=F, html_font="Trebuchet MS", bootstrap_options=c("striped", "condensed"))
+```
+
+Sensitivity
+```{r}
+summary(results)$statistics$Sens %>% kbl(digits=3, caption="Sens") %>% 
+  kable_styling(full_width=F, html_font="Trebuchet MS", bootstrap_options=c("striped", "condensed"))
+```
+
+Specificity
+```{r}
+summary(results)$statistics$Spec %>% kbl(digits=3, caption="Spec") %>% 
+  kable_styling(full_width=F, html_font="Trebuchet MS", bootstrap_options=c("striped", "condensed"))
+```
+
+Gráfico boxplot para comparar modelos a partir de las métricas más relevantes.
+```{r}
+bwplot(results, layout = c(3, 1))
+```
+
+##### Conclusiones
+
+Las principales ventajas de los modelos de machine learning con respecto a los modelos logit y mixed logit es que permiten capturar relaciones no lineales y más complejas entre las variables, en especial los modelos de Random forest y Cart. Además, estos tienen una mejor capacidad predictiva y no se basan en tantos supuestos estadísticos como los modelos logit. Con respecto a sus desventajas, la principal es que estos tipos de modelos no permiten interpretar los efectos de las variables, por lo que tiende a utilizarse para otros tipos de análisis.
+
+Para recomendar cuál modelo usar, este dependerá de cuál es el objetivo principal. Si se busca interpretar los efectos de las variables individuales y buscar comprender otros aspectos de las elecciones, es mejor utilizar mlogit o mixed logit. Sin embargo, si el objetivo es predecir la elección de la oferta, es mejor utilizar modelos de machine learning.
+
+En particular, el modelo de Random Forest tiene mejores resultados bajo el criterio de ROC, por lo que si se busca ser capaz de discriminar entre clases, es mejor utilizar tal modelo. En términos de Sensibilidad, el modelo de Random Forest es el que destaca, por lo que se recomienda usar en el caso de buscar tener una buena capacidad para identificar las elecciones positivas (que en este caso es "Elige"). Por último, en términos de Especificidad, es decir, identificar correctamente las "no elecciones", es se recomienda usar el modelo CART.
+
+En general, si se busca maximizar la capacidad predictiva general, considerando las 3 métricas, la mejor opción es el modelo de Random Forest, pues es el modelo que en promedio se desempeña mejor. Si se busca la interpretación con el fin de explicar políticas o toma de decisiones, es mejor usar los modelos Logit y Mixed Logit, lo que presentará una mayor transparencia en los efectos del modelo a cambio de perder precisión predictiva.
+
+
+#### Pregunta 5
+
+(1 punto) Suponga que se quiere imponer una regulación que obligue a los oferentes de crédito a desplegar la información de acuerdo al formato indicado por el tratamiento 3. ¿Cuál sería el impacto de esta regulación? ¿A qué tipo de usuario le afectaría más directamente esta política? En base a sus resultados, ¿recomendaría implementar dicha regulación?           
+
+Para comentar respecto a la regulación que se busca implementar, se deben considerar los resultados que se han ido rescatando a lo largo del desarrollo de esta tarea.
+
+Comenzando por lo expuesto en el EDA, se pueden apreciar los siguientes puntos interesantes:
+
+-Que estar en T3 no tiene relación con tomar decisiones más consistentes.
+
+-Que estar en T3 no está correlacionado con entender mejor las ofertas.
+
+Luego, al pasar a los modelos logit realizados en los apartados 2 y 3, se llegó a las siguientes conclusiones:
+
+-A partir del modelo Logit del apartado 2, nuevamente no hay ninguna evidencia significativa entre estar en T3 y la toma de decisiones.
+
+-A partir del modelo Logit del apartado 2, no hay evidencia para decir cómo varía la sensibilidad en la elección al estar en T3 según el tipo de usuario (mujer, mayor o menor literacidad financiera, entre otros.)
+
+-A partir del modelo Logit del apartado 3 (incluyendo het. no observable), a diferencia de los puntos expuestos anteriormente, se apreció que estar en T3 si muestra una significacia para elegir una alternativa (izquierda) respecto a estar en otro de los 3 grupos experimentales.
+
+Ahora, tomando todos las conclusiones, se puede concluir lo siguiente:
+
+No es concluyente el impacto que tendría aplicar esta nueva política de obligar a los oferentes de crédito a desplegar la información de acuerdo al formato indicado por el tratamiento 3. Si bien el modelo del apartado 3 sí entrega indicios de que seguir explorando modelos más robustos y complejos pueden llevar a concluir que en realidad implementar esta política llevará a que las personas tomen decisiones más sensatas y consistentes, a la luz de lo evidenciando en la mayoría de los resultados de este informe, simplemente no se puede llegar a concluir que ese sería el impacto en este caso.
+
+Además, respecto a que tipo de usuarios afectaría más directamente, nuevamente no se puede llegar a conclusiones relevantes (debido a la falta de evidencia significativa en las variables que interactúan con T3). Sin embargo, se propone que estos serían las personas que no entienden bien los esquemas de pago, ya que según los gráficos del EDA, en T3 se ve una leve mejoría en la comprensión de las ofertas respecto a los que están en GC y T1, por lo esta política beneficiaría a las personas que poseen bajo entendimiento de las alternativas.
+
+Finalmente, con respecto a si se implementaría o no esta regulación, se concluye que la evidencia de la tarea no permite responder esta pregunta. No obstante, se comenta que al tomar el apartado ético en este tipo de ofertas, sí se recomendaría un diseño como el que propone este tipo de grupo experimental, ya que se considera que es un piso mínimo bajo el cual se le muestra  toda la información relevante (no en letra chica) de forma pareja a todas las personas, mejorando así la claridad para el consumidor. También esto ayudaría a evitar las promociones engañosas o malintencionadas de algunas campañas.
+
+
+
+
+## Resumen
+
+(1 punto) Resuma sus aprendizajes principales en un máximo de 4 tablas o figuras. Redacte de manera concisa sus resultados tal como los reportaría a un directorio de tomador de decisiones. Agregue cualquier conclusión o idea que le parezca relevante de comunicar.
+
+A lo largo de la tarea se exploró cómo caracterizar la elección de una oferta de crédito según las variables que la definen y según el grupo experimental al que fueron expuestos los participantes, para notar el efecto de las distintas formas de mostrar gráficamente el crédito en la publicidad.
+
+Para llegar a las conclusiones más relevantes, se utilizaron distintas herramientas para transformar los datos en insights o conclusiones que pueden aportar a tomar las decisiones que se necesiten.
+
+En primera instancia, se realizó un análisis exploratorio de datos (EDA), en donde se pudo observar a grandes rasgos cómo se comportan el grueso de las variables presentes en la base. En particular, se quiere destacar que se pudo aprender cómo afectan a la elección de la oferta las 4 variables que caracterizan un crédito, las cuales son el costo total, el CAE, el valor de la cuota y la cantidad de estas.
+
+```{r P6, echo=TRUE, message=FALSE, warning=FALSE}
+# CTC promedio vs choice
+graf1 <- ggplot(df, aes(x = factor(choice), y = feat.CTC, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Costo total crédito (promedio) ",
+       x = "Elección",
+       y = "Valor Promedio de CTC",
+       fill = "Choice") + 
+  theme_minimal()
+
+
+# cuotas promedio vs choice
+graf2 <- ggplot(df, aes(x = factor(choice), y = feat.CantCuotas, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Cantidad de cuotas (promedio)",
+       x = "Elección",
+       y = "Valor Promedio de cuotas",
+       fill = "Choice") +
+  theme_minimal()
+
+# cae promedio vs choice
+graf3 <- ggplot(df, aes(x = factor(choice), y = feat.CAE, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "CAE (promedio)",
+       x = "Elección ",
+       y = "Valor Promedio de CAE",
+       fill = "Choice") +
+  theme_minimal()
+
+# valor cuota vs choice
+graf4 <- ggplot(df, aes(x = factor(choice), y = feat.VC, fill = factor(choice))) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", color = "white") +
+  labs(title = "Valor cuota (promedio)",
+       x = "Elección",
+       y = "Valor Promedio de valor cuota",
+       fill = "Choice") +
+  theme_minimal()
+
+# Organizar los gráficos en una grilla
+grid.arrange(graf1, graf2, graf3, graf4, ncol = 2)
+```
+
+En este se pudo apreciar que, tomando los valores promedios de estas variables, los participantes tienden a escoger créditos que poseen un **menor costo total**, **un menor CAE**, **una menor cantidad de cuotas** y **un mayor valor de cuota**.
+
+Estos resultados no vinieron a poner un punto final respecto a responder qué caracteriza las alternativas escogidas, ya que caracterizarla requiere un análisis más profundo, sobre todo considerando que no para todos los agentes una mejor opción será la que cumpla con esos requisitos, si no que también depende de la restricción presupuestaria y preferencias que tenga cada persona. 
+
+En esta actividad investigativa, un punto importante del análisis se realizó con respecto a la influencia de pertenecer a una condición experimental sobre el entendimiento y la consistencia en la toma de decisiones. Con respecto al entendimiento, se realizó una aproximación a este mediante el análisis de la variable que identifica si el participante pudo reconocer correctamente el esquema de pago que le presentaba la oferta delante suyo. Para entender cómo se comportaba a lo largo de los distintos grupos experimentales, se confeccionó el siguiente gráfico:
+
+
+```{r message=FALSE, warning=FALSE}
+# Crear los dataframes con el conteo de personas únicas para ola2.error_esq_pago igual a 1 y 0
+conteo_error_gc <- df_gc %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_GC = n_distinct(idp))
+
+conteo_error_t1 <- df_t1 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T1 = n_distinct(idp))
+
+conteo_error_t2 <- df_t2 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T2 = n_distinct(idp))
+
+conteo_error_t3 <- df_t3 %>%
+  group_by(ola2.error_esq_pago, idp) %>%
+  summarise(Cantidad_error_T3 = n_distinct(idp))
+
+# Crear los gráficos de barras apiladas
+plot_error_gc <- ggplot(conteo_error_gc, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_GC, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en GC",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  # Ajuste del eje y
+  theme_minimal()
+
+plot_error_t1 <- ggplot(conteo_error_t1, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T1, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T1",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_error_t2 <- ggplot(conteo_error_t2, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T2, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T2",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+plot_error_t3 <- ggplot(conteo_error_t3, aes(x = factor(ola2.error_esq_pago), y = Cantidad_error_T3, fill = factor(ola2.error_esq_pago))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Identifica secuencia en T3",
+       x = "Valor",
+       y = "Cantidad de Personas") +
+  scale_x_discrete(labels = c("Si", "No")) +  
+  scale_fill_manual(values = c("0" = "#1f78b4", "1" = "#e31a1c"),
+                    labels = c("Si", "No"), name = "Identifica secuencia") +
+  scale_y_continuous(breaks = seq(0, 150, 25)) +  
+  theme_minimal()
+
+# Crear la grilla
+grid.arrange(plot_error_gc, plot_error_t1, plot_error_t2, plot_error_t3, ncol = 2)
+```
+
+
+En este gráfico se observa que en realidad la tendencia es muy similar en todos los grupos experimentales, lo que lleva a la conclusión de que el grupo experimental al cual el participante fue asignado no tiene ningún efecto para ayudar a facilitar el entendimiento de la oferta y lleva a poner sospecha respecto a la efectividad que tiene una opción como el tratamiento 3 en donde los valores claves se muestran más grandes.
+
+
+Para hacer doble click sobre estas conclusiones preliminares, se aplicaron diversos modelos.
+
+Primeramente, se realizó un modelo logit para estimar la elección binaria, pero sin heterogeneidad no observable, con el objetivo de ahondar en caracterizar la oferta seleccionada.
+```{r}
+modelsummary (list('Logit'=modelp2), 
+              estimate  = "{estimate}{stars}",
+              statistic = NULL)
+```
+
+Como se puede observar en la tabla de resultados, se refuerza la conclusión respecto a los comportamientos marcados en cuanto a la preferencia del cliente en ofertas con un menor CAE y menores  cantidades de cuotas. Sin embargo, también se vuelve a obtener que los resultados son poco concluyentes y poco favorables respecto a estar en T3 particularmente (revisar efecto de la variable), por lo que se añade otro argumento para dudar respecto a que el diseño de las ofertas en este grupo da como resultado decisiones más robustas.
+
+Continuando en la implementación de modelos, se aplicó uno logit multinomial, para venir a suplir una de las limitantes que presentaba el modelo anterior, la falta de heterogeneidad de tipo no observable. Al correr este modelo, se pudo apreciar que si bien perdió interpretabilidad debido a la gran cantidad de estimadores que entrega en sus resultados (modelo más complejo), ganó en ajustar mejor la dispersión de los datos y proporcionar una comprensión más detallada que el modelo logit anterior. En base a esto, se destaca que incorporar heterogeneidad no observable en este tipo de decisiones, en donde la variabilidad a nivel de preferencias individuales no está capturada en las variables observables recogidas, es importante para proponer modelos más sólidos.
+
+Debido a esta mejoría en los aspectos del modelo anteriormente mencionada, esta fue la primera indicación en donde el efecto sobre estar en T3 resultó ser significativo, queriendo indicar que estar en este grupo puede aportar para tomar una decisión en comparación a estar en alguno de los otros 3.
+
+Posteriormente, se ejecutaron modelos de machine learning para predecir la oferta que elegirá cada participante y luego evaluar a partir de métricas relevantes. Se aplicaron modelos de CART, Random Forest, KNN y SVM, y cada uno entregó sus respectivas matrices de confusión, las cuales llevan a evaluar los modelos bajo la curva Roc, la sensibility y la specificity.
+
+```{r}
+bwplot(results, layout = c(3, 1))
+```
+
+Para comentar respecto a comparar estos modelos con los logit planteados anteriormente, se menciona que la decisión de cuál usar depende totalmente del objetivo que se tenga. Si se quieren tomar decisiones a partir de interpretar los efectos de las variables una por una, sin duda sería más recomendable utilizar los modelos logit, pero si el objetivo es predecir qué oferta escogerá un participante, algún modelo de machine learning lo hará mejor.
+
+Con todo, para decidir qué modelo de machine learning se preferiría por sobre los demas, se concluye que la mejor opción es el Random Forest ya que es el que entrega en promedio un mejor desempeño de capacidad predictiva.
+
+Para finalizar el estudio pedido, se concluyó respecto a la regulación que obliga a los oferentes de crédito a desplegar una oferta con el diseño que se ocupa en el grupo de tratamiento 3. El análisis realizado a lo largo del informe no permitió ser tajante respecto al impacto que tendría, ni a que tipo de usuario le afectaría más directamente. 
+
+
+## Anexos
+
+-Se utilizó ChatGPT para pedir ayuda en los códigos para confeccionar gráficos y nuevas variables.
+
+-Se utilizaron los códigos vistos en clases, en particular la clase 10 para logiT, 12 para ML y la 13 para mixed logit.
+
+
+
+
+
+
+
