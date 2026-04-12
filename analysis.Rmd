@@ -37,10 +37,13 @@ Una pregunta de primer orden de este estudio es si distintas configuraciones vis
 
 Las condiciones experimentales se ilustran a continuación para el caso en que la promoción se motiva por la compra de un televisor. En el estudio se considera además, avisos motivados por un viaje de vacaciones o pagar una cuenta hospitalaria imprevista.  
 
-<p align="center">
-  <img width=90% src="ejemplo-wide.png">
-  <figcaption>Ilustración de las condiciones experimentales.</figcaption>
-</p>
+<div style="border-left: 4px solid #888; background: #f5f5f5; padding: 10px 15px; margin: 15px 0; font-size: 0.9em;">
+<b>Note:</b> The original course illustration of the four experimental conditions
+(<i>ejemplo-wide.png</i>) is not redistributed in this public repository because it is
+course material from <i>IN5162 — Marketing Engineering, Universidad de Chile</i>.
+The four conditions (Control, T1, T2, T3) differ in how the credit cost information
+is visually emphasized in the digital ad.
+</div>
 
 Otra pregunta relacionada pero difícil de evaluar está asociada a si el formato del despliegue de información afecta la _consistencia_ de las decisiones. En efecto, decisiones más consistentes debieran estar asociadas a un mejor entendimiento de las condiciones del crédito. Para evaluar la consistencia de las decisiones se evalúan las respuestas del experimento con respecto a las obtenidas por este mismo conjunto de participantes en una ola anterior, en que los sujetos decidían entre distintas ofertas de crédito _libres_ de material publicitario. En particular se les pidió elegir créditos en los siguientes dos formatos:
 
@@ -159,7 +162,7 @@ library(kernlab)
 
 Lectura base de datos
 ```{r}
-df <- read.csv("credit-choice.csv", sep = ";", encoding = "UTF-8")
+df <- read.csv("data/sample.csv", sep = ";", encoding = "UTF-8")
 ```
 
 Se verifican los missing values por columna.
