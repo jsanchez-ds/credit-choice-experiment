@@ -14,8 +14,23 @@ encoding: UTF-8
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  error = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
 ```
+
+> **Note on the synthetic sample.** This rendered version of the report runs
+> against `data/sample.csv`, a 265-row synthetic sample (the original 8,000-row
+> dataset is not redistributed for course-licensing reasons — see
+> `data/README.md`). Some of the more heavily-parameterized specifications
+> below (the `modelp2` conditional logit with interactions and the `modelp3`
+> mixed logit) may fail on this small sample because the Hessian becomes
+> singular. Their failures are rendered inline so you can see exactly where
+> the original analysis used the full dataset; the qualitative findings in
+> the README still hold against the original 8k-row run.
 
 <p align="right"><b>Curso:</b> Ingeniería de Marketing, Marcel Goic</p>
 <p align="right"><b>Equipo Docente:</b> Joaquín Cisternas, Ignacio Hernández, Andrés Olivares, Agustín Hilcker</p>
