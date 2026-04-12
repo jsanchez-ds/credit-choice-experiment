@@ -55,7 +55,7 @@ jobs:
             "rmarkdown", "knitr", "tidyverse", "dplyr", "readr", "ggplot2",
             "gridExtra", "ggcorrplot", "psych", "mlogit", "fixest", "glmnet",
             "caret", "kernlab", "earth", "randomForest", "kableExtra",
-            "stargazer", "modelsummary", "gt"
+            "stargazer", "modelsummary", "gt", "themis", "recipes"
           )
           to_install <- pkgs[!pkgs %in% rownames(installed.packages())]
           if (length(to_install) > 0) install.packages(to_install)

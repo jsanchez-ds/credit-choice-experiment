@@ -32,115 +32,12 @@ knitr::opts_chunk$set(
 > the original analysis used the full dataset; the qualitative findings in
 > the README still hold against the original 8k-row run.
 
-<p align="right"><b>Curso:</b> Ingeniería de Marketing, Marcel Goic</p>
-<p align="right"><b>Equipo Docente:</b> Joaquín Cisternas, Ignacio Hernández, Andrés Olivares, Agustín Hilcker</p>
-
 # {.tabset}
 
-## Enunciado
+## Preparación del entorno
 
-Las decisiones financieras, constituyen una de las componentes más importante de las vidas de los ciudadanos contemporáneos. Sin embargo, muchas veces estas decisiones conllevan importantes niveles de endeudamiento. Según un informe de la Comisión para el Mercado Financiero (CMF) para deudores bancarios en Chile, la carga financiera es de un 16,9% y el apalancamiento de 3,6 veces el ingreso. Aunque los motivos del sobre-endeudamiento son variados, en lo que sigue, exploraremos si la estructura de la promoción digital de las ofertas de crédito tienen un impacto en decisiones financieras. Un mejor entendimiento de esta relación puede informar respecto a la necesidad de regular cómo se informan estos servicios.  
+Carga de librerías y lectura del dataset (muestra sintética de 265 filas).
 
-Esta tarea se centrará en estudio de preferencias de créditos financieros a partir de la exposición de promociones digitales. En particular, se busca evaluar cómo el contenido y la _saliencia_ de la información sobre el costo del crédito pueden afectar el entendimiento de los usuarios de las consecuencias de adquirir un crédito y la preferencia de distintas ofertas de crédito. Para esto, diseñamos un estudio en que una muestra de usuarios son expuesto a una serie de seis decisiones ficticias en que deben elegir entre decisiones alternativas de crédito. 
-
-Una pregunta de primer orden de este estudio es si distintas configuraciones visuales de los avisos digitales, tienen algún impacto en cómo los usuarios forman preferencias respecto a ofertas de crédito. Para evaluar este impacto, los sujetos son aleatoriamente asignados a 4 condiciones experimentales, que difieren en la forma en que son expuestas las condiciones formales de los créditos: 
-
-- **Grupo de Control (GC):** Corresponde al la configuración típica de los avisos actuales del mercado chileno. 
-- **Tratamiento 1 (T1):** Se realza el costo total del crédito. 
-- **Tratamiento 2 (T2):** Se realza tanto el costo total del crédito como el valor de las cuotas.
-- **Tratamiento 3 (T3):** Toda la información financiera se realza en comparación a los otros elementos visuales del aviso. 
-
-Las condiciones experimentales se ilustran a continuación para el caso en que la promoción se motiva por la compra de un televisor. En el estudio se considera además, avisos motivados por un viaje de vacaciones o pagar una cuenta hospitalaria imprevista.  
-
-<div style="border-left: 4px solid #888; background: #f5f5f5; padding: 10px 15px; margin: 15px 0; font-size: 0.9em;">
-<b>Note:</b> The original course illustration of the four experimental conditions
-(<i>ejemplo-wide.png</i>) is not redistributed in this public repository because it is
-course material from <i>IN5162 — Marketing Engineering, Universidad de Chile</i>.
-The four conditions (Control, T1, T2, T3) differ in how the credit cost information
-is visually emphasized in the digital ad.
-</div>
-
-Otra pregunta relacionada pero difícil de evaluar está asociada a si el formato del despliegue de información afecta la _consistencia_ de las decisiones. En efecto, decisiones más consistentes debieran estar asociadas a un mejor entendimiento de las condiciones del crédito. Para evaluar la consistencia de las decisiones se evalúan las respuestas del experimento con respecto a las obtenidas por este mismo conjunto de participantes en una ola anterior, en que los sujetos decidían entre distintas ofertas de crédito _libres_ de material publicitario. En particular se les pidió elegir créditos en los siguientes dos formatos:
-
-a. _Número de cuotas_: Los sujetos mueven una barra ( _slider_ ) para definir el número de cuotas en que preferiría pagar un crédito de un monto dado. Acá, los sujetos se enfrentan a pagar menos cuotas de montos más altos, pero con menos interés o más cuotas de monto menor, pero con mayor interés. 
-b. _Tablas_: Los mismos pares de ofertas que se mostraran en la segunda ola, se presentan acá en tablas planas en que solo se muestra la información financiera (CAE, Costo total del crédito, valor cuota), sin ningún material publicitario. 
-    
-Para evaluar los factores que influyen en la decisión de compra de servicios financiero, a partir del experimento antes descrito, se construyó una base de datos ('credit-choice.csv') con las elecciones de cada individuo que formó parte del estudio y un listado de covariables relevantes como se indica a continuación. 
-
-- *choice_id:* Identificador de la elección. Como la elección es binaria, cada elección tiene dos filas. 
-- *numero_eleccion:* Identificador del número de la elección, que toma valores del 1 al 6. 
-- *idp:*	Identificador del participante. Como cada participante es expuesto a seis decisiones binarias, cada participante tiene asociadas doce filas. 
-- *feat.CantCuotas:* Cantidad de cuotas desplegada en la oferta. 
-- *feat.CAE:* Valor CAE desplegado en la oferta.
-- *feat.CTC:* Costo total de crédito desplegado en la oferta.
-- *feat.VC:* Valor cuota desplegado en la oferta. 
-- *choice:*	Variable binaria que indica si esa alternativa fue elegida por el participante. 
-- *option:*	Posición de la oferta (1 si se muestra a la derecha, 2 si se muestra a la izquierda)
-- *condicion_experimental:*	Condición experimental a la que fue asignado aleatoriamente el participante (GC, T1, T2, T3).
-- *type_cons:* Considerando que las elecciones podrían estar evaluando la consistencia de las elecciones respecto a la ola anterior, acá se denota qué tipo de consistencia se busca evaluar: consistencia_slider (cuando se compara a las decisiones de cuotas elegidas a través del _slider_), consistencia_tabla (cuando se compara a las decisiones desplegadas en tablas planas) y eleccion_dominada (cuando una alternativa domina a la otra y por tanto se espera que una alternativa sea ampliamente elegida respecto a la otra).
-- *macroescenario:* Escenario que motiva la adquisición del crédito (TV, Viaje, Salud)
-- *monto_oferta:* Monto por el cuál se motiva la adquisición del crédito (TV=200K, Viaje=1M, Salud=400K).
-- *ola1.cuotas_optimas_100k:* Numero de cuotas elegidas para pagar un crédito en de $100.000.
-- *ola1.cuotas_optimas_200k:*	Numero de cuotas elegidas para pagar un crédito en de $200.000.
-- *ola1.cuotas_optimas_400k:*	Numero de cuotas elegidas para pagar un crédito en de $400.000.
-- *ola1.cuotas_optimas_500k:* Numero de cuotas elegidas para pagar un crédito en de $500.000.
-- *ola1.cuotas_optimas_1m:*	Numero de cuotas elegidas para pagar un crédito en de $1.000.000.
-- *ola1.cuotas_optimas_5m:* Numero de cuotas elegidas para pagar un crédito en de $5.000.000.
-<!-- - ola1.eleccion_tabla_400k:  -->
-<!-- - ola1.eleccion_tabla_1m:	 -->
-- *ola2.error_estimacion_CTC_O2_E2:* Error en la estimación del Costo Total del Crédito (CTC) que hacen los participantes, usando la elección 2 del macro-escenario 2 (TV).
-- *ola2.error_estimacion_VC_O2_E2:*	Error en la estimación del Valor Cuota (VC) que hacen los participantes, usando la elección 2 del macro-escenario 2 (TV).
-- *ola2.error_esq_pago:* 1 si el participante no logra identificar cuál es la secuencia de pagos que correctamente representa la información presentada para una oferta seleccionada. 
-- *ola2.error_recordacion_CTC_O3_E2:*	Cuál es la diferencia entre el CTC recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).
-- *ola2.error_recordacion_Cuotas_O3_E2:* Cuál es la diferencia entre el númeeo de cuotas recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).	
-- *ola2.error_recordacion_CAE_O3_E2:*	Cuál es la diferencia entre el CAE recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).
-- *ola2.error_recordacion_VC_O3_E2:* Cuál es la diferencia entre el Valor Cuota recordado por el participante y lo que efectivamente indicaba la elección 2 del macro-escenario 3 (Salud).	
-- *ola2.grado_consistencia:* Número de veces que el participante fue consiste entre sus elecciones y las de la primera ola (0, 1, 2, 3 o 4).
-- *ola2.grado_corr.dominancia:*	Número de veces que el participante eligió la alternativa dominante en los dos escenarios en que existía dominancia (0, 1 o 2).
-- *ola2.est_mercado:*	Indica cómo el participante considera que la oferta presentada  se compara a las alternativas que típicamente observa en el mercado (más barato, más caro, similar, o no sabe). 
-- *dem.mujer:* 1 si la participante es mujer (0 si es hombre).
-- *dem.liquidez:* Cuanta liquidez mensual declara el participante para pagar en gastos financieros. 
-- *dem.lit_fin:* Puntaje de literacidad financiera. El puntaje máximo de tres, indica que el participante contestó correctamente las tres preguntas de literacidad financiera. 
-
-A partir de los datos propuestos describa qué factores resultan más relevantes para la elección de una oferta de crédito y caracterice el rol qué juega la arquitectura en que son desplegados la información financiera en la publicidad digital. 
-
-#### **Reglas del juego** 
-
-- Las tareas buscan replicar parcialmente las labores a las que se enfrentarían en el análisis de datos para el apoyo en la toma de decisiones, ya sea para una organización o para la definición de políticas. Por esto, se han propuesto preguntas relativamente abiertas que requieren que ustedes discutan y decidan cuál es el mejor enfoque de solución. Les pedimos que se involucren tempranamente en el desarrollo de la tarea para tener una discusión enriquecedora.
-
-- Todas las dudas, comentarios y errores publicarlos exclusivamente en el foro de u-cursos. De esta forma todos se benefician de las respuestas ofrecidas.
-
-- Consideramos que es muy importante que logren escribir un informe conciso con una redacción acorde de un informe técnico profesional. La presentación y comunicación de resultados es parte integral de la tarea y, por tanto, será evaluada cuidadosamente.
-
-- La tarea se desarrolla en grupos de máximo 3 integrantes. El entregable principal es un único markdown separado en tabs (a través de la opción .tabset). En el primer tab incluya todo el desarrollo de la tarea adecuadamente comentado. El segundo tab incluya el resumen de sus resultados de acuerdo a lo pedido en la pregunta 6. Este segundo tab es el que usarán en caso de que les corresponda presentar sus resultados. Considere también un tab con todos los procedimientos preliminares y otro para los anexos dónde puede incluir cualquier resultado complementario. 
-
-- Para entregar sus resultados suba, vía u-cursos, un único archivo comprimido llamado t2-A1-A2-A3.zip, donde A1, A2 y A3 es el primer apellido de los integrantes del grupo. Incluya también los nombres de los integrantes en el documento mismo. Incluya en el zip tanto el archivo .html de salida del markdown como los códigos fuentes que permitan reproducir sus resultados.
-
-- Para la pregunta final consideramos que 4 figuras son suficientes para resumir los aprendizajes más relevantes, pero si están convencidos de que agregar una figura adicional es absolutamente necesaria, ¡Adelante!
-
-* La fecha de entrega de la tarea es el <span style="color: navy">jueves 23 de noviembre</span> a las 23:59, sin excepciones y no habrá plazo extra para la entrega. Si por algún motivo de fuerza mayor se ve imposibilitado de entregar la tarea en el plazo estipulado, deberá escribir directamente al profesor explicando su situación. El profesor decidirá el curso de acción de acuerdo a los méritos del caso. Como siempre, es mejor dar cuenta de cualquier problema con la mayor anticipación posible. 
-
-* Recuerde que tenemos dos instancias de retroalimentación asociadas a la tarea:
-
-  1. La sesión, a realizarse el día <span style="color: navy">viernes 17 de noviembre</span>, está destinada para que expongan sus avances y dificultades y podamos discutir colectivamente cuáles son causes de acción razonables para resolver los problemas. A esta fecha se espera que los grupos al menos hayan explorado los datos y estimado algunos modelos preliminares. 
-  2. La sesión, a realizarse el día <span style="color: navy">viernes 24 de noviembre</span>, está destinada a que expongan los resultados más relevantes de su trabajo y resuman sus principales aprendizajes. Esta instancia busca simular una presentación final contra una contraparte interesada, como a las que se enfrentarán frecuentemente en su vida profesional. 
-  
-Aunque me gustaría que todos pudieran presentar, no tenemos tiempo para aquello por lo solo  seleccionaremos a aquellos que encuentren valor en esta instancia de aprendizaje. Las presentaciones tendrán una duración aproximada de 10 minutos y no es necesario que preparen material adicional. La salida del markdown debe ser lo suficientemente explicativa para comunicar sus resultados. 
-
-- A raíz de la opinión de los estudiantes, vamos a implementar una co-evaluación para que los estudiantes puedan valorar la participación de los compañeros y compañeras de grupo. Para calcular la nota final del alumno $j$ ponderaremos la nota grupal por $\max \left\{ \frac{J \cdot prom_j}{\sum_{k=1}^J prom_k} , 0.75 \right\}$, donde $prom_k$ corresponde al promedio de las co-evaluaciones recibidas por el estudiante $k$ dentro del grupo de $J$ integrantes.  
-
-- Recientemente hemos visto avances importantes en la aplicabilidad de herramientas de inteligencia artificial para generar contenido (e.g. [ChatGPT](https://chat.openai.com), [copilot](https://github.com/features/copilot), [alphacode](https://alphacode.deepmind.com)). Aunque es aún temprano para saber con precisión cuales serán las implicancias del uso de estas herramientas en el proceso de desarrollo, en este curso permitimos y fomentamos su uso. Si en el desarrollo de la tarea usan cualquiera de estas herramientas por favor incluyan un breve párrafo indicando que herramientas usaron y para qué. 
-
-- El equipo docente considera que la copia de tareas atenta en contra de tu aprendizaje y por tanto aplicará todas las medidas que estén a su disposición para desincentivar esta mala práctica.
-
-- El equipo docente considera que la copia de tareas atenta en contra de tu aprendizaje y por tanto aplicará todas las medidas que estén a su disposición para desincentivar esta mala práctica.
-
-## Preliminares
-
-Escriba acá todos los comandos que necesita ejecutar antes de abordar las preguntas de la tarea (carga de librerías, lectura de datos, limpieza de la data, transformación de variables y todo lo que necesite).
-
-#### Preparación Tarea
-Preliminares
 ```{r P}
 #Preliminares 
 
@@ -220,13 +117,11 @@ df$option_2 <- ifelse(df$option == 2, "izquierda", "derecha")
 ```
 
 
-## Desarrollo
+## Análisis
 
-Documente acá el desarrollo de su tarea por pregunta.
+### 1. Análisis Exploratorio
 
-#### Pregunta 1 
-
-(1 punto) Realice un análisis exploratorio de los datos. En particular:
+Antes de modelar, exploramos la distribución de la variable dependiente y las principales covariables del experimento, para entender qué patrones plausiblemente impulsan las decisiones de los participantes.
 
 - Describa qué variables que podrían tener efecto en la elección de ofertas, por ejemplo identificando qué atributos aparecen más frecuentemente entre aquellas ofertas que fueron elegidas por los participantes. 
 
@@ -717,9 +612,9 @@ y poseer un mejor entendimiento de la oferta, por lo que para llegar a conclusio
 
 Concluyendo la exploración de datos, se menciona que sin duda entrega una mejor base para enfrentar el desafío que supone construir modelos que estudien las decisiones financieras de manera eficaz, ya que este análisis destila, tanto las variables que serán utilizadas, así como también una idea preliminar de cómo se comportan frente a la elección de una u otra alternativa.
 
-#### Pregunta 2
+### 2. Modelo Logit Condicional
 
-(1 punto) Usando los resultados del análisis exploratorio, proponga y estime un modelo de elección discreta _sin_ heterogeneidad no observable, para caracterizar la oferta seleccionada por el participante. Interprete sus resultados y discuta las limitaciones del modelo propuesto. 
+A partir de lo observado en la exploración, especificamos un primer modelo de elección discreta sin heterogeneidad no observable. El objetivo es cuantificar el peso relativo de los atributos de cada oferta (CAE, número de cuotas) y de las condiciones experimentales sobre la probabilidad de elección.
 
 Se propondrá un modelo de elección discreta (binaria) sin heterogeneidad no observable con el objetivo de caracterizar la oferta seleccionada por el participante.
 
@@ -776,9 +671,9 @@ En definitiva, se pueden observar comportamientos marcados principalmente por la
 
 Finalmente, es importante mencionar que la caracterización descrita en este modelo tiene limitantes que no permiten extraer con mayor eficiencia el aprendizaje de los datos tal como se fue mencionando a lo largo de la descripción. Algunas de las limitaciones, sin ir más lejos, pueden provenir de no incluir heterogeneidad no observable, como también de la interpretación de interacciones no significativas. Otro factor que podría ser limitante depende de la relevancia y exhaustividad de las variables escogidas para representar las preferencias de los participantes.
 
-#### Pregunta 3
+### 3. Mixed Logit con Heterogeneidad No Observable
 
-(1 punto) Extienda el modelo anterior para incorporar heterogeneidad no observable y cualquier otro comportamiento que le parezca relevante para aminorar las limitaciones del modelo planteado en la parte anterior. Interprete sus resultados y discuta si este nuevo modelo debiera preferirse al modelo anterior.
+El logit condicional asume preferencias homogéneas, lo que puede enmascarar respuestas heterogéneas al tratamiento. Extendemos el modelo permitiendo coeficientes aleatorios sobre los atributos clave para capturar variación no observada entre participantes.
 
 
 Se extiende el modelo anterior, modificando el código tal que se pueda incorporar heterogeneidad no observable en las covariables que caracterizan la elección.
@@ -806,9 +701,9 @@ En relación con lo mencionado, el equipo esperaba que la inclusión de la heter
 
 Es sabido que el modelo desarrollado en esta pregunta es más complejo que el desarrollado en la pregunta anterior, y en consecuencia, también es más difícil de interpretar. En línea con lo anterior, y para responder a la pregunta de cuál modelo el equipo debería preferir, se considera que, si bien es cierto que el modelo de la pregunta 3 que considera la heterogeneidad no observable es más complejo y entrega ciertos insights significativos, por una cuestión de interpretabilidad, el modelo más simple (el de la pregunta 2) logra capturar ciertas tendencias de comportamiento relevantes para el caso de estudio, con la ventaja adicional de que se pueden extraer aprendizajes de manera más directa.
 
-#### Pregunta 4 
+### 4. Comparación con Modelos de Machine Learning
 
-(1 punto) Incluya al menos dos modelos que utilicen el enfoque de
+Mientras los modelos logit ofrecen interpretabilidad, los algoritmos de ML pueden capturar interacciones no lineales. Comparamos CART, SVM lineal, KNN y Random Forest sobre la misma división train/test para contrastar capacidad predictiva.
 *machine learning* para predecir la oferta que elegirá cada participante. Incluya todas las variables y evalúe su rendimiento a partir de las métricas de pronóstico que le parezcan razonable. Discuta respecto a las ventajas y desventajas de estos modelos respecto a los modelos planteados anteriormente y provea una recomendación respecto a qué modelo preferiría usar.
 
 
@@ -980,9 +875,9 @@ En particular, el modelo de Random Forest tiene mejores resultados bajo el crite
 En general, si se busca maximizar la capacidad predictiva general, considerando las 3 métricas, la mejor opción es el modelo de Random Forest, pues es el modelo que en promedio se desempeña mejor. Si se busca la interpretación con el fin de explicar políticas o toma de decisiones, es mejor usar los modelos Logit y Mixed Logit, lo que presentará una mayor transparencia en los efectos del modelo a cambio de perder precisión predictiva.
 
 
-#### Pregunta 5
+### 5. Discusión y Recomendaciones de Política
 
-(1 punto) Suponga que se quiere imponer una regulación que obligue a los oferentes de crédito a desplegar la información de acuerdo al formato indicado por el tratamiento 3. ¿Cuál sería el impacto de esta regulación? ¿A qué tipo de usuario le afectaría más directamente esta política? En base a sus resultados, ¿recomendaría implementar dicha regulación?           
+Una pregunta abierta del estudio es si conviene exigir un estándar regulatorio tipo T3 — información financiera completamente destacada — a la publicidad de créditos de consumo. Apoyándonos en los modelos anteriores discutimos lo que la evidencia respalda y lo que queda fuera de su alcance.
 
 Para comentar respecto a la regulación que se busca implementar, se deben considerar los resultados que se han ido rescatando a lo largo del desarrollo de esta tarea.
 
@@ -1011,9 +906,9 @@ Finalmente, con respecto a si se implementaría o no esta regulación, se conclu
 
 
 
-## Resumen
+## Conclusiones
 
-(1 punto) Resuma sus aprendizajes principales en un máximo de 4 tablas o figuras. Redacte de manera concisa sus resultados tal como los reportaría a un directorio de tomador de decisiones. Agregue cualquier conclusión o idea que le parezca relevante de comunicar.
+Síntesis de los principales hallazgos del análisis.
 
 A lo largo de la tarea se exploró cómo caracterizar la elección de una oferta de crédito según las variables que la definen y según el grupo experimental al que fueron expuestos los participantes, para notar el efecto de las distintas formas de mostrar gráficamente el crédito en la publicidad.
 
@@ -1166,18 +1061,4 @@ Para comentar respecto a comparar estos modelos con los logit planteados anterio
 
 Con todo, para decidir qué modelo de machine learning se preferiría por sobre los demas, se concluye que la mejor opción es el Random Forest ya que es el que entrega en promedio un mejor desempeño de capacidad predictiva.
 
-Para finalizar el estudio pedido, se concluyó respecto a la regulación que obliga a los oferentes de crédito a desplegar una oferta con el diseño que se ocupa en el grupo de tratamiento 3. El análisis realizado a lo largo del informe no permitió ser tajante respecto al impacto que tendría, ni a que tipo de usuario le afectaría más directamente. 
-
-
-## Anexos
-
--Se utilizó ChatGPT para pedir ayuda en los códigos para confeccionar gráficos y nuevas variables.
-
--Se utilizaron los códigos vistos en clases, en particular la clase 10 para logiT, 12 para ML y la 13 para mixed logit.
-
-
-
-
-
-
-
+Para finalizar el estudio pedido, se concluyó respecto a la regulación que obliga a los oferentes de crédito a desplegar una oferta con el diseño que se ocupa en el grupo de tratamiento 3. El análisis realizado a lo largo del informe no permitió ser tajante respecto al impacto que tendría, ni a que tipo de usuario le afectaría más directamente.
