@@ -72,12 +72,12 @@ library(kernlab)
 
 ```
 
-Lectura base de datos
+Lectura de la base de datos:
 ```{r}
 df <- read.csv("data/sample.csv", sep = ";", encoding = "UTF-8")
 ```
 
-Se verifican los missing values por columna.
+Verificación de valores faltantes por columna:
 ```{r}
 colSums(is.na(df)) 
 
@@ -123,18 +123,12 @@ df$option_2 <- ifelse(df$option == 2, "izquierda", "derecha")
 
 Antes de modelar, exploramos la distribución de la variable dependiente y las principales covariables del experimento, para entender qué patrones plausiblemente impulsan las decisiones de los participantes.
 
-- Describa qué variables que podrían tener efecto en la elección de ofertas, por ejemplo identificando qué atributos aparecen más frecuentemente entre aquellas ofertas que fueron elegidas por los participantes. 
+#### EDA
 
-- Explore si las condiciones experimentales tienen alguna correlación con el entendimiento que tienen los participantes de las distintas ofertas y de la consistencia de sus decisiones.
-
-#### EDA 
-
-Se realizará la exploración de datos como primer acercamiento a entender el fenómeno a estudiar.
-
-Para estudiar qué caracteriza una mejor decisión financiera dada su promoción digital en distintos grupos experimentales, se pueden explorar distintas variables que ayudan a los agentes a modelar esta decisión. En particular, en este informe se desarrollará  principalmente con respecto a cuáles son las variables que influyen al tomar la elección de la oferta, pero también es relevante conocer si los participantes entendieron esa oferta, y si fueron consistentes en sus decisiones.
+Exploramos qué variables influyen en la elección de oferta, si los participantes entendieron las ofertas y si sus decisiones fueron consistentes entre olas.
 
 
-Para comenzar realiza un summary a la base para ver las principales métricas de dispersión de las distintas variables.
+Resumen descriptivo de las variables:
 ```{r}
 #decidir si usar esta o summary o ninguna
 
@@ -142,7 +136,7 @@ describe(df)
 
 ```
 
-Ya conociendo más a profundidad los tipos de datos que se manejarán en la tarea, se revisa la correlación entre algunas variables númericas de interés.
+Correlación entre las variables numéricas de las ofertas:
 
 
 ```{r message=FALSE, warning=FALSE}
@@ -158,11 +152,11 @@ ggcorrplot(cor_matrix, hc.order = TRUE, type = "upper", lab = TRUE)
 
 ```
 
-Se aprecia que, tal como se esperaba en general, entre las variables feat. que caracterizan la oferta, existe gran correlación. Por ejemplo, se nota que el costo total del crédito correlaciona positivamente en gran medida con la cantidad de cuotas que tiene y el CAE, y en menor medida pero también positivamente con el valor de la cuota.
+Como es esperable, los atributos de la oferta están altamente correlacionados: el costo total del crédito (CTC) correlaciona fuertemente con la cantidad de cuotas y el CAE, y en menor medida con el valor de la cuota.
 
-Ahora, se realizarán conteos y caracterizaciones generales del estudio.
+Conteos y caracterización general de la muestra:
 
-Se visualizará cómo se distribuyen las variables demográficas presentes en la data. En primer lugar, la distribución de género.
+Distribución de variables demográficas — empezando por género:
 
 ```{r message=FALSE, warning=FALSE}
 # Contamos la cantidad de cada género y luego los metemos a un dataframe
@@ -214,7 +208,7 @@ ggplot(conteo_lit_fin, aes(x = factor(dem.lit_fin), y = count, fill = factor(dem
 
 Al revisar las 3 gráficas, se puede apreciar que el experimento incluye una proporción similar de hombres y mujeres, que la liquidez mensual que declaran tener para gastos financieros se distribuye en su mayoría en valores cercanos a los $50.000, y que las personas del estudio se encuentran acumuludas entre el puntaje 1 y 2 de literacidad financiera, teniendo que el puntaje máximo (3) es el que se encuentra en menor cantidad.
 
-Ahora, se procede a estudiar los créditos que son ofrecidos en cada macroescenario.
+Créditos ofrecidos por macroescenario:
 
 ```{r message=FALSE, warning=FALSE}
 # Calcular el CTC promedio por cada macroescenario
@@ -344,9 +338,9 @@ De esta forma, quedan claras las diferencias entre las alternativas que son esco
 Con esto, no se quiere concluir que la elección de una mejor oferta será siempre la de créditos que cumplan esas características, ya que esta es una decisión a nivel individual que claramente tiene una componente de restricción presupuestaria de los individuos, por tanto la elección de una alternativa no siempre será la mejor decisión para todas las personas. Así, será interesante caracterizar qué y cómo influencia la decisión en los modelos a realizar más adelante.
 
 
-Otras aristas que valen la pena explorar son el entendimiento y la consistencia en la elección de las ofertas, particularmente se verificará la correlación entre estas y el estar en alguna de las condiciones experimentales.
+Exploramos ahora el entendimiento y la consistencia en la elección, y su relación con la condición experimental.
 
-Partiendo por la consistencia, se buscará explorar la variable ola2.grado_consistencia, para observar la distribución de la cantidad de veces que fueron consistentes los participantes en cada una de sus elecciones entre la primera y segunda ola, en cada condición experimental.
+Distribución de `ola2.grado_consistencia` — cuántas veces cada participante eligió igual que en la ola 1, por condición experimental:
 
 ```{r}
 # Se filtran distintas bases por condicion experimental
@@ -415,7 +409,7 @@ Así, al observar la misma tendencia en todos los grupos experimentales, se pued
 
 Para buscar ampliar esta conclusión, se seguirá con el estudio del entendimiento.
 
-Se buscará hacer una exploración con respecto a la variable ola2.error_esq_pago como un proxy del entendimiento. De este modo, los participantes que tienen 0 se identifican como personas que entendieron la oferta(identificó secuencia) y 1 quienes no. De igual manera, se realizarán conteos para ver la distribución de esta variable en las distintas condiciones experimentales.
+Usamos `ola2.error_esq_pago` como proxy de entendimiento: los participantes con valor 0 entendieron la oferta(identificó secuencia) y 1 quienes no. De igual manera, conteos para ver la distribución de esta variable en las distintas condiciones experimentales.
 
 ```{r message=FALSE, warning=FALSE}
 # Crear los dataframes con el conteo de personas únicas para ola2.error_esq_pago igual a 1 y 0
@@ -610,13 +604,13 @@ Observando la grilla de gráficos, a excepción de T2, en todos los grupos exper
 Viendo las 3 aproximaciones al entendimiento de las ofertas entre condiciones experimentales, se puede llegar a una conclusión similar a la obtenida con la consistencia, y es que parece no haber evidencia de correlación entre estar en algún grupo experimental
 y poseer un mejor entendimiento de la oferta, por lo que para llegar a conclusiones más robustas respecto a la efectividad de algún formato publicitario sobre la caracterización de los ofertas, se deberá disponer de mayores herramientas a lo largo del desarrollo del informe.
 
-Concluyendo la exploración de datos, se menciona que sin duda entrega una mejor base para enfrentar el desafío que supone construir modelos que estudien las decisiones financieras de manera eficaz, ya que este análisis destila, tanto las variables que serán utilizadas, así como también una idea preliminar de cómo se comportan frente a la elección de una u otra alternativa.
+En resumen, la exploración entrega una base sólida para enfrentar el desafío que supone construir modelos que estudien las decisiones financieras de manera eficaz, ya que este análisis destila, tanto las variables que serán utilizadas, así como también una idea preliminar de cómo se comportan frente a la elección de una u otra alternativa.
 
 ### 2. Modelo Logit Condicional
 
 A partir de lo observado en la exploración, especificamos un primer modelo de elección discreta sin heterogeneidad no observable. El objetivo es cuantificar el peso relativo de los atributos de cada oferta (CAE, número de cuotas) y de las condiciones experimentales sobre la probabilidad de elección.
 
-Se propondrá un modelo de elección discreta (binaria) sin heterogeneidad no observable con el objetivo de caracterizar la oferta seleccionada por el participante.
+Estimamos un modelo de elección discreta (binaria) sin heterogeneidad no observable para caracterizar qué impulsa la selección de oferta.
 
 Se creará un modelo logit, por lo que como primer paso se debe formatear los datos para el correcto uso del paquete "mlogit".
 
@@ -630,7 +624,7 @@ df_mlogit <- mlogit.data(mydf, choice="ch", shape="long",  alt.var="option", chi
 head(as.data.frame(df_mlogit),n=6)
 ```
 
-El modelo que se estimará guarda estrecha relación con las variables exploradas en el apartado anterior. En particular, se piensa caracterizar la oferta teniendo el CAE y la cantidad de cuotas como variables que pueden decidir una preferencia por el crédito a tomar, además de una serie de variables entre demográficas y disposiciones del experimento que serán de ayuda para ver los efectos que tienen este tipo de condiciones sobre la alternativa escogida por los participantes. Se explicarán estas variables y el sentido de su inclusión:
+La especificación del modelo incluye CAE y cantidad de cuotas como atributos de la oferta que plausiblemente determinan la preferencia por el crédito a tomar, además de una serie de variables entre demográficas y disposiciones del experimento que serán de ayuda para ver los efectos que tienen este tipo de condiciones sobre la alternativa escogida por los participantes. Se explicarán estas variables y el sentido de su inclusión:
 
 -T3: Variable dummy que toma un 1 si el participante está en el grupo de tratamiento 3, la cual sera de utilidad para ver diferencias en la elección entre estar en este grupo y pertenecer a alguno de los otros 3, ya que se considera que la publicidad digital de este grupo posee mayores diferencias. (por ejemplo, n° de cuotas y costo total más grandes)
 
@@ -676,7 +670,7 @@ Finalmente, es importante mencionar que la caracterización descrita en este mod
 El logit condicional asume preferencias homogéneas, lo que puede enmascarar respuestas heterogéneas al tratamiento. Extendemos el modelo permitiendo coeficientes aleatorios sobre los atributos clave para capturar variación no observada entre participantes.
 
 
-Se extiende el modelo anterior, modificando el código tal que se pueda incorporar heterogeneidad no observable en las covariables que caracterizan la elección.
+Extendemos el modelo para incorporar heterogeneidad no observable mediante coeficientes aleatorios.
 
 ```{r message=FALSE, warning=FALSE}
 modelp3 <- mlogit(ch ~ CAE + CantCuotas | mujerT3 + T3 + CantCuotasT3 + estima_bienT3 + lit_finT3 + TV + dominada, 
@@ -685,7 +679,7 @@ modelp3 <- mlogit(ch ~ CAE + CantCuotas | mujerT3 + T3 + CantCuotasT3 + estima_b
                      correlation = TRUE, print.level = 1, df_mlogit)
 ```
 
-Luego se reportan los resultados:
+Resultados:
 
 ```{r message=FALSE, warning=FALSE}
 modelsummary(list('Mixed Logit (Corr)'=modelp3),
@@ -693,18 +687,15 @@ modelsummary(list('Mixed Logit (Corr)'=modelp3),
              statistic = NULL)
 ```
 
-Al integrar heterogeneidad no observable, se evidencia una tendencia similar en el comportamiento de ciertas variables con respecto al modelo de la parte 2. Por ejemplo, en el caso de las variables CAE y Cantidad de cuotas, se observa que una mayor cantidad de cuotas o un alto CAE disminuye la probabilidad de elegir dicha opción. Otra variable destacada es la interacción entre el tratamiento 3 e izquierda, donde se puede observar que es significativa, con un coeficiente de 21.336. Esto indicaría que, dado que se sometió al tratamiento 3, hay una alta probabilidad de elegir una opción de la izquierda en comparación con otros tipos de tratamiento.
+El mixed logit confirma las mismas direcciones que el condicional: mayor CAE y más cuotas reducen la probabilidad de elección. La novedad es que la interacción T3 × izquierda resulta significativa (coef. 21.3), indicando que el tratamiento 3 desplaza la probabilidad de elección hacia la alternativa izquierda — un efecto que el logit simple no capturaba.
 
-Las interacciones de las variables que contienen el término "Chol" se refieren a la utilización de la matriz de Cholesky para modelar la correlación entre los efectos aleatorios. En particular, se observa que varias de estas interacciones son significativas y ayudan a explicar de manera más completa el comportamiento no observable. En comparación con el modelo creado para la pregunta anterior, este modelo mixto logit captura la heterogeneidad no observable, abordando así una de las limitaciones del primer modelo. Se destaca que el modelo para esta pregunta tiene un mayor R^2 (0.369 vs. 0.347) y posee un AIC ligeramente menor (3631.1 vs. 3641.4).
+Los términos Cholesky modelan la correlación entre los coeficientes aleatorios; varias interacciones son significativas, lo que confirma heterogeneidad real entre participantes. En comparación con el condicional, el R2 sube ligeramente (0.369 vs. 0.347) y el AIC baja (3631 vs. 3641) — una mejora modesta pero consistente con la adición de parámetros.
 
-En relación con lo mencionado, el equipo esperaba que la inclusión de la heterogeneidad no observable mejorara el desempeño del modelo de la parte 2 aún más de lo que realmente lo hizo. Aunque mejoró solo un poco, se puede decir que la inclusión de la heterogeneidad no observable es relevante al modelar la decisión de elección de los clientes.
-
-Es sabido que el modelo desarrollado en esta pregunta es más complejo que el desarrollado en la pregunta anterior, y en consecuencia, también es más difícil de interpretar. En línea con lo anterior, y para responder a la pregunta de cuál modelo el equipo debería preferir, se considera que, si bien es cierto que el modelo de la pregunta 3 que considera la heterogeneidad no observable es más complejo y entrega ciertos insights significativos, por una cuestión de interpretabilidad, el modelo más simple (el de la pregunta 2) logra capturar ciertas tendencias de comportamiento relevantes para el caso de estudio, con la ventaja adicional de que se pueden extraer aprendizajes de manera más directa.
+La ganancia de ajuste es menor de lo esperado. Esto sugiere que, si bien la heterogeneidad no observable es estadísticamente relevante, el grueso de la variación ya está capturado por los atributos de la oferta. En la práctica, el logit condicional (más simple, más interpretable) sigue siendo una herramienta útil cuando el objetivo es extraer conclusiones directas sobre el efecto de cada variable.
 
 ### 4. Comparación con Modelos de Machine Learning
 
 Mientras los modelos logit ofrecen interpretabilidad, los algoritmos de ML pueden capturar interacciones no lineales. Comparamos CART, SVM lineal, KNN y Random Forest sobre la misma división train/test para contrastar capacidad predictiva.
-*machine learning* para predecir la oferta que elegirá cada participante. Incluya todas las variables y evalúe su rendimiento a partir de las métricas de pronóstico que le parezcan razonable. Discuta respecto a las ventajas y desventajas de estos modelos respecto a los modelos planteados anteriormente y provea una recomendación respecto a qué modelo preferiría usar.
 
 
 ##### Preparación de datos para P4
@@ -725,14 +716,14 @@ levels(df_ml$choice) <- make.names(levels(df_ml$choice))
 levels(df_ml$option) <- make.names(levels(df_ml$option))
 ```
 
-Se decidió considerar las variables de las ofertas, condición experimental, tipo de consistencia, el contexto del escenario y todos los aspectos demográficos. Adicionalmente se agregó la variable option para predecir.
+Incluimos las variables de las ofertas, condición experimental, consistencia, contexto del escenario y aspectos demográficos. Adicionalmente se agregó la variable option para predecir.
 
 ```{r}
 table(df_ml$option, df_ml$choice) %>% kbl() %>% 
   kable_classic(full_width = F, html_font = "Trebuchet MS")
 ```
 
-Partición en base train y base test
+División train / test
 
 ```{r}
 s.train <- sample(1:nrow(df_ml), size=round(0.8*nrow(df_ml),0))
@@ -859,7 +850,7 @@ summary(results)$statistics$Spec %>% kbl(digits=3, caption="Spec") %>%
   kable_styling(full_width=F, html_font="Trebuchet MS", bootstrap_options=c("striped", "condensed"))
 ```
 
-Gráfico boxplot para comparar modelos a partir de las métricas más relevantes.
+Comparación de modelos vía boxplot:
 ```{r}
 bwplot(results, layout = c(3, 1))
 ```
@@ -879,7 +870,7 @@ En general, si se busca maximizar la capacidad predictiva general, considerando 
 
 Una pregunta abierta del estudio es si conviene exigir un estándar regulatorio tipo T3 — información financiera completamente destacada — a la publicidad de créditos de consumo. Apoyándonos en los modelos anteriores discutimos lo que la evidencia respalda y lo que queda fuera de su alcance.
 
-Para comentar respecto a la regulación que se busca implementar, se deben considerar los resultados que se han ido rescatando a lo largo del desarrollo de esta tarea.
+Para comentar respecto a la regulación que se busca implementar, se deben considerar los resultados que se han ido rescatando a lo largo del desarrollo del análisis.
 
 Comenzando por lo expuesto en el EDA, se pueden apreciar los siguientes puntos interesantes:
 
@@ -901,7 +892,7 @@ No es concluyente el impacto que tendría aplicar esta nueva política de obliga
 
 Además, respecto a que tipo de usuarios afectaría más directamente, nuevamente no se puede llegar a conclusiones relevantes (debido a la falta de evidencia significativa en las variables que interactúan con T3). Sin embargo, se propone que estos serían las personas que no entienden bien los esquemas de pago, ya que según los gráficos del EDA, en T3 se ve una leve mejoría en la comprensión de las ofertas respecto a los que están en GC y T1, por lo esta política beneficiaría a las personas que poseen bajo entendimiento de las alternativas.
 
-Finalmente, con respecto a si se implementaría o no esta regulación, se concluye que la evidencia de la tarea no permite responder esta pregunta. No obstante, se comenta que al tomar el apartado ético en este tipo de ofertas, sí se recomendaría un diseño como el que propone este tipo de grupo experimental, ya que se considera que es un piso mínimo bajo el cual se le muestra  toda la información relevante (no en letra chica) de forma pareja a todas las personas, mejorando así la claridad para el consumidor. También esto ayudaría a evitar las promociones engañosas o malintencionadas de algunas campañas.
+Finalmente, con respecto a si se implementaría o no esta regulación, se concluye que la evidencia del análisis no permite responder esta pregunta. No obstante, se comenta que al tomar el apartado ético en este tipo de ofertas, sí se recomendaría un diseño como el que propone este tipo de grupo experimental, ya que se considera que es un piso mínimo bajo el cual se le muestra  toda la información relevante (no en letra chica) de forma pareja a todas las personas, mejorando así la claridad para el consumidor. También esto ayudaría a evitar las promociones engañosas o malintencionadas de algunas campañas.
 
 
 
@@ -910,11 +901,11 @@ Finalmente, con respecto a si se implementaría o no esta regulación, se conclu
 
 Síntesis de los principales hallazgos del análisis.
 
-A lo largo de la tarea se exploró cómo caracterizar la elección de una oferta de crédito según las variables que la definen y según el grupo experimental al que fueron expuestos los participantes, para notar el efecto de las distintas formas de mostrar gráficamente el crédito en la publicidad.
+A lo largo del análisis se exploró cómo caracterizar la elección de una oferta de crédito según las variables que la definen y según el grupo experimental al que fueron expuestos los participantes, para notar el efecto de las distintas formas de mostrar gráficamente el crédito en la publicidad.
 
 Para llegar a las conclusiones más relevantes, se utilizaron distintas herramientas para transformar los datos en insights o conclusiones que pueden aportar a tomar las decisiones que se necesiten.
 
-En primera instancia, se realizó un análisis exploratorio de datos (EDA), en donde se pudo observar a grandes rasgos cómo se comportan el grueso de las variables presentes en la base. En particular, se quiere destacar que se pudo aprender cómo afectan a la elección de la oferta las 4 variables que caracterizan un crédito, las cuales son el costo total, el CAE, el valor de la cuota y la cantidad de estas.
+El análisis exploratorio reveló cómo se distribuyen las principales variables del experimento. En particular, se quiere destacar que se pudo aprender cómo afectan a la elección de la oferta las 4 variables que caracterizan un crédito, las cuales son el costo total, el CAE, el valor de la cuota y la cantidad de estas.
 
 ```{r P6, echo=TRUE, message=FALSE, warning=FALSE}
 # CTC promedio vs choice
