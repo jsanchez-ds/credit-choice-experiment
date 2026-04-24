@@ -1,3 +1,5 @@
+🌐 **English** · [Español](README.es.md)
+
 # Credit Choice Experiment — Discrete Choice Modeling
 
 A discrete-choice analysis of how the **visual salience of credit terms** in digital advertising affects consumer choices over loan offers. Participants in a controlled experiment were randomly assigned to four ad-design conditions and asked to choose between credit alternatives across multiple scenarios.
